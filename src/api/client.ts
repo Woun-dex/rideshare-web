@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // Define the base URL for the API
 // In a real application, this would likely come from import.meta.env.VITE_API_URL
-const API_BASE_URL = 'http://localhost:8080' // Using default spring boot port as placeholder
+const API_BASE_URL = 'http://localhost:8090' // Using default spring boot port as placeholder
 
 export const apiClient = axios.create({
     baseURL: API_BASE_URL,

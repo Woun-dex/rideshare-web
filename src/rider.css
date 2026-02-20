@@ -1,0 +1,594 @@
+/* --- RIDER UI STYLES --- */
+:root {
+    --rider-bg-panel: #1a1d24;
+    /* Dark gray for sidebar */
+    --rider-bg-input: #232730;
+    --rider-accent: #2563eb;
+    /* Blue */
+    --rider-border: #2d333f;
+    --rider-text: #f8fafc;
+    --rider-text-muted: #94a3b8;
+    --rider-panel-w: 380px;
+}
+
+.rider-layout {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: #000;
+    display: flex;
+}
+
+.rider-map-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+}
+
+/* Base side panel format */
+.rider-side-panel {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: var(--rider-panel-w);
+    background-color: var(--rider-bg-panel);
+    z-index: 10;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    color: var(--rider-text);
+    overflow-y: auto;
+}
+
+.rider-side-panel.left {
+    left: 0;
+    border-right: 1px solid var(--rider-border);
+}
+
+.rider-side-panel.right {
+    right: 20px;
+    top: 20px;
+    bottom: 20px;
+    border-radius: 16px;
+    height: auto;
+    border: 1px solid var(--rider-border);
+}
+
+/* Header */
+.rider-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 24px;
+}
+
+.rider-header-icon {
+    background: var(--rider-accent);
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.rider-header h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.rider-content {
+    padding: 0 24px 24px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Inputs */
+.rider-input-group {
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 32px;
+}
+
+.rider-input-line {
+    position: absolute;
+    left: 17px;
+    top: 24px;
+    bottom: 24px;
+    width: 2px;
+    background-color: var(--rider-border);
+    z-index: 1;
+}
+
+.rider-input-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background-color: var(--rider-bg-input);
+    border-radius: 8px;
+    padding: 12px 16px;
+    position: relative;
+    z-index: 2;
+    border: 1px solid transparent;
+}
+
+.rider-input-row:focus-within {
+    border-color: var(--rider-accent);
+}
+
+.rider-input-row input {
+    background: transparent;
+    border: none;
+    color: var(--rider-text);
+    font-size: 0.95rem;
+    width: 100%;
+    outline: none;
+}
+
+.rider-input-row input::placeholder {
+    color: var(--rider-text-muted);
+}
+
+.input-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--rider-accent);
+}
+
+.input-square {
+    width: 8px;
+    height: 8px;
+    background: var(--rider-text);
+}
+
+/* Options List */
+.options-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--rider-text-muted);
+    margin-bottom: 12px;
+}
+
+.ride-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: auto;
+    /* Push footer down */
+}
+
+.ride-option {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid var(--rider-border);
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.02);
+    transition: all 0.2s;
+}
+
+.ride-option:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.ride-option.selected {
+    border-color: var(--rider-accent);
+    box-shadow: 0 0 0 1px var(--rider-accent);
+    background: rgba(37, 99, 235, 0.1);
+}
+
+.option-img {
+    width: 60px;
+    height: 40px;
+    background-color: white;
+    /* Fallback for car image */
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.option-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.option-info {
+    flex: 1;
+}
+
+.option-title {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.option-desc {
+    font-size: 0.8rem;
+    color: var(--rider-text-muted);
+    margin-top: 2px;
+}
+
+.option-price-eta {
+    text-align: right;
+}
+
+.option-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.option-eta {
+    font-size: 0.8rem;
+    color: var(--rider-text-muted);
+    margin-top: 2px;
+}
+
+.option-eta.selected {
+    color: #60a5fa;
+}
+
+/* Fixed Footer inside panel */
+.rider-footer {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.payment-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--rider-bg-input);
+    padding: 12px 16px;
+    border-radius: 8px;
+}
+
+.payment-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.9rem;
+}
+
+.payment-change {
+    color: var(--rider-accent);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.request-btn {
+    background: var(--rider-accent);
+    color: white;
+    border: none;
+    width: 100%;
+    padding: 16px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.request-btn:hover {
+    background: #1d4ed8;
+}
+
+.request-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Global floating UI elements */
+.top-pill-toggles {
+    position: absolute;
+    top: 24px;
+    left: calc(var(--rider-panel-w) + 24px);
+    display: flex;
+    gap: 12px;
+    z-index: 20;
+}
+
+.pill-button {
+    background: var(--rider-bg-panel);
+    border: 1px solid var(--rider-border);
+    color: var(--rider-text);
+    padding: 8px 16px;
+    border-radius: 24px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.pill-button.active {
+    background: var(--rider-accent);
+    border-color: var(--rider-accent);
+}
+
+.pill-button.icon-only {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+}
+
+/* User Profile top right */
+.top-right-actions {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    display: flex;
+    gap: 12px;
+    z-index: 20;
+}
+
+.user-pill {
+    background: var(--rider-bg-panel);
+    border: 1px solid var(--rider-border);
+    padding: 6px 16px 6px 6px;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+}
+
+.user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #f59e0b;
+}
+
+/* Tracking Right Panel Enhancements */
+.tracking-eta-header {
+    text-align: center;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--rider-border);
+    margin-bottom: 24px;
+}
+
+.eta-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--rider-text-muted);
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+}
+
+.eta-time {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.eta-desc {
+    font-size: 0.9rem;
+    color: var(--rider-text-muted);
+}
+
+.driver-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.driver-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 2px solid var(--rider-border);
+    position: relative;
+    background: #ccc;
+}
+
+.driver-badge {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    background: var(--rider-accent);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--rider-bg-panel);
+}
+
+.driver-info h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+}
+
+.car-card {
+    background: var(--rider-bg-input);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+    position: relative;
+}
+
+/* Abstract car shape watermark */
+.car-card::after {
+    content: '';
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    width: 60px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.car-title {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.car-color {
+    color: var(--rider-text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+}
+
+.car-plate {
+    display: inline-block;
+    background: white;
+    color: black;
+    font-family: monospace;
+    font-weight: bold;
+    padding: 4px 12px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+}
+
+.timeline {
+    position: relative;
+    margin-bottom: 32px;
+    padding-left: 24px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    background: var(--rider-border);
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 24px;
+}
+
+.timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.time-dot {
+    position: absolute;
+    left: -24px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--rider-bg-panel);
+    border: 2px solid var(--rider-text-muted);
+    z-index: 2;
+}
+
+.time-dot.active {
+    border-color: var(--rider-accent);
+    background: var(--rider-accent);
+}
+
+.timeline-label {
+    font-size: 0.75rem;
+    color: var(--rider-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.timeline-text {
+    font-size: 0.95rem;
+}
+
+.tracking-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.tracking-actions button {
+    flex: 1;
+    background: var(--rider-bg-input);
+    color: white;
+    border: 1px solid var(--rider-border);
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tracking-actions button:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.message-btn {
+    background: var(--rider-accent);
+    color: white;
+    border: none;
+    width: 100%;
+    padding: 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.message-btn:hover {
+    background: #1d4ed8;
+}
+
+.call-btn {
+    background: var(--rider-bg-input);
+    border: 1px solid var(--rider-border);
+    color: white;
+    padding: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cancel-btn-text {
+    text-align: center;
+    color: var(--rider-text-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 24px;
+    cursor: pointer;
+}
+
+.cancel-btn-text:hover {
+    color: white;
+}
