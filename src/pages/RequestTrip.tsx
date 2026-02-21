@@ -9,18 +9,14 @@ export default function RequestTrip() {
     const navigate = useNavigate();
     const { mutate: requestTrip, isPending } = useRequestTrip();
 
-    // In a real app, map clicking would drive this state
-    const [pickupLat, setPickupLat] = useState<number>(40.7128);
-    const [pickupLng, setPickupLng] = useState<number>(-74.0060);
-    const [dropoffLat, setDropoffLat] = useState<number>(40.7580);
-    const [dropoffLng, setDropoffLng] = useState<number>(-73.9855);
+    const [pickupLat, setPickupLat] = useState<number | undefined>(undefined);
+    const [pickupLng, setPickupLng] = useState<number | undefined>(undefined);
+    const [dropoffLat, setDropoffLat] = useState<number | undefined>(undefined);
+    const [dropoffLng, setDropoffLng] = useState<number | undefined>(undefined);
 
-    const [pickupText, setPickupText] = useState('123 Innovation Drive, Downtown');
+    const [pickupText, setPickupText] = useState('');
     const [dropoffText, setDropoffText] = useState('');
-    const [selectingLocation, setSelectingLocation] = useState<'pickup' | 'dropoff' | null>('dropoff'); // Start by asking where to
-
-    // MVP: Single standard ride type
-    const rideType = 'ECONOMY';
+    const [selectingLocation, setSelectingLocation] = useState<'pickup' | 'dropoff' | null>('pickup');
 
     // Dynamic routing stats
     const [routeDistance, setRouteDistance] = useState<number | null>(null);
@@ -125,7 +121,7 @@ export default function RequestTrip() {
                 </button>
                 <div className="user-pill" style={{ cursor: 'pointer' }} onClick={() => navigate('/profile')}>
                     <div className="user-avatar" />
-                    <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>John Doe</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Rider Account</span>
                 </div>
             </div>
 
@@ -202,10 +198,10 @@ export default function RequestTrip() {
                             </div>
                             <div className="option-price-eta">
                                 <div className="option-price">
-                                    {routeDistance ? `$${(5.00 + routeDistance * 2.50).toFixed(2)}` : '...'}
+                                    {routeDistance ? `$${(5.00 + routeDistance * 2.50).toFixed(2)}` : '--'}
                                 </div>
                                 <div className="option-eta selected">
-                                    {routeDuration ? `${Math.round(routeDuration)} min dropoff` : '...'}
+                                    {routeDuration ? `${Math.round(routeDuration)} min dropoff` : '--'}
                                 </div>
                             </div>
                         </div>
@@ -223,7 +219,8 @@ export default function RequestTrip() {
                         <button
                             className="request-btn"
                             onClick={handleRequest}
-                            disabled={isPending}
+                            disabled={isPending || !pickupLat || !dropoffLat}
+                            style={{ opacity: (!pickupLat || !dropoffLat) ? 0.5 : 1 }}
                         >
                             {isPending ? 'Requesting...' : 'Request Ride'}
                         </button>
@@ -239,7 +236,9 @@ export default function RequestTrip() {
                     <span style={{ fontSize: '0.9rem', color: 'var(--rider-text)' }}>Fastest pickup nearby</span>
                 </div>
                 <div style={{ width: '1px', background: 'var(--rider-border)', alignSelf: 'stretch' }} />
-                <span style={{ fontSize: '0.9rem', color: 'var(--rider-text)', fontWeight: 600 }}>Arrives in ~3 mins</span>
+                <span style={{ fontSize: '0.9rem', color: 'var(--rider-text)', fontWeight: 600 }}>
+                    {routeDuration ? `Arrives in ~${Math.round(routeDuration)} mins` : 'Select dropoff'}
+                </span>
             </div>
 
         </div>

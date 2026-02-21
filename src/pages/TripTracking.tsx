@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useGetTrip, useCancelTrip } from '../hooks/useTripHooks';
 import { useWebSocket } from '../hooks/useWebSocket';
 import TripMap from '../components/TripMap';
-import { ArrowLeft, Share2, Shield, MessageSquare, Phone, CloudRain, CheckCircle, Car, CreditCard } from 'lucide-react';
+import { ArrowLeft, Share2, Shield, MessageSquare, Phone, CloudRain, CheckCircle, CreditCard } from 'lucide-react';
 import '../rider.css';
 
 export default function TripTracking() {
@@ -22,23 +22,32 @@ export default function TripTracking() {
 
     useEffect(() => {
         if (!isConnected) return;
-        const handleDriverLocation = (payload: any) => setRealtimeLocation({ lat: payload.lat, lng: payload.lng });
+
+        // Listen for new event envelopes from Kafka backend
+        const handleLocationUpdate = (payload: any) => {
+            // Depending on backend structure, coordinates might be flat OR in pickup/dropoff.
+            // Following typical LocationUpdate patterns from the provided schema:
+            if (payload.latitude && payload.longitude) {
+                setRealtimeLocation({ lat: payload.latitude, lng: payload.longitude });
+            }
+        };
         const handleStatusChange = (payload: any) => setRealtimeStatus(payload.status);
 
-        on('DRIVER_LOCATION_UPDATE', handleDriverLocation);
-        on('TRIP_STATUS_UPDATE', handleStatusChange);
+        on('LOCATION_UPDATED', handleLocationUpdate);
+        on('STATUS_CHANGED', handleStatusChange);
 
         return () => {
-            off('DRIVER_LOCATION_UPDATE', handleDriverLocation);
-            off('TRIP_STATUS_UPDATE', handleStatusChange);
+            off('LOCATION_UPDATED', handleLocationUpdate);
+            off('STATUS_CHANGED', handleStatusChange);
         };
     }, [isConnected, on, off]);
 
-    if (isLoading) return <div style={{ color: 'white', padding: '50px' }}>Loading Tracker...</div>;
+    if (isLoading) return <div className="rider-layout" style={{ color: 'white', padding: '50px' }}>Loading Tracker...</div>;
 
     const currentStatus = realtimeStatus || tripDetails?.status || 'FINDING DRIVER';
-    // Dummy driver lat/lng falling back to an initial position near dropoff to demonstrate animation
-    const showLocation = realtimeLocation || { lat: 40.7300, lng: -73.9900 };
+
+    // Only use realtime or actual driver location. No static mockup fallbacks.
+    const showLocation = realtimeLocation || null;
 
     return (
         <div className="rider-layout">
@@ -50,8 +59,8 @@ export default function TripTracking() {
                     pickupLng={tripDetails?.pickupLng || -74.0060}
                     dropoffLat={tripDetails?.dropoffLat || 40.7580}
                     dropoffLng={tripDetails?.dropoffLng || -73.9855}
-                    driverLat={showLocation.lat}
-                    driverLng={showLocation.lng}
+                    driverLat={showLocation?.lat}
+                    driverLng={showLocation?.lng}
                     isTracking={true}
                 />
             </div>
@@ -88,48 +97,62 @@ export default function TripTracking() {
                     {/* ETA Section */}
                     <div className="tracking-eta-header">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                            <span className="eta-label">ESTIMATED ARRIVAL</span>
+                            <span className="eta-label">STATUS</span>
                             <span style={{ fontSize: '0.75rem', background: 'rgba(37, 99, 235, 0.1)', color: '#60a5fa', padding: '4px 8px', borderRadius: '12px', fontWeight: 600 }}>PRIORITY PICKUP</span>
                         </div>
-                        <div className="eta-time">4 <span style={{ fontSize: '1.2rem', color: '#60a5fa' }}>mins</span></div>
-                        <div className="eta-desc">Marcus is 1.2 miles away and heading your way. Status: {currentStatus}</div>
+                        <div className="eta-time">{currentStatus}</div>
+                        <div className="eta-desc">Your driver is navigating to your location.</div>
                     </div>
 
                     {/* Driver Section */}
-                    <div className="driver-card">
-                        <div className="driver-avatar">
-                            {/* Insert real driver pic here */}
-                            <img src="https://i.pravatar.cc/100?img=11" alt="driver" style={{ width: '100%', height: '100%', borderRadius: '50%' }} />
-                            <div className="driver-badge"><CheckCircle size={12} color="white" /></div>
-                        </div>
-                        <div className="driver-info">
-                            <h3>Marcus Richardson</h3>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: 'var(--rider-text-muted)' }}>
-                                <span style={{ color: '#f59e0b', fontWeight: 600 }}>★ 4.9</span>
-                                <span>• 2,450 Trips</span>
+                    {tripDetails?.driverId ? (
+                        <>
+                            <div className="driver-card">
+                                <div className="driver-avatar">
+                                    <img src="https://i.pravatar.cc/100?img=11" alt="driver" style={{ width: '100%', height: '100%', borderRadius: '50%' }} />
+                                    <div className="driver-badge"><CheckCircle size={12} color="white" /></div>
+                                </div>
+                                <div className="driver-info">
+                                    <h3>Driver {tripDetails.driverId.substring(0, 4)}</h3>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: 'var(--rider-text-muted)' }}>
+                                        <span style={{ color: '#f59e0b', fontWeight: 600 }}>★ 5.0</span>
+                                        <span>• Active Driver</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Car Details */}
+                            <div className="car-card">
+                                <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--rider-text-muted)', marginBottom: '8px' }}>YOUR RIDE</div>
+                                <div className="car-title">Standard Vehicle</div>
+                                <div className="car-color">Wait for driver</div>
+                                <div className="car-plate">----</div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '12px', marginBottom: '8px', marginTop: '16px' }}>
+                                <button className="message-btn"><MessageSquare size={18} /> Message</button>
+                                <button className="call-btn"><Phone size={20} /></button>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="driver-card" style={{ justifyContent: 'center', padding: '32px' }}>
+                            <div style={{ color: 'var(--rider-text-muted)', textAlign: 'center' }}>
+                                Matching you with a nearby driver...
                             </div>
                         </div>
-                    </div>
-
-                    {/* Car Details */}
-                    <div className="car-card">
-                        <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--rider-text-muted)', marginBottom: '8px' }}>YOUR RIDE</div>
-                        <div className="car-title">Tesla Model 3</div>
-                        <div className="car-color">Midnight Silver Metallic</div>
-                        <div className="car-plate">7YJR842</div>
-                    </div>
+                    )}
 
                     {/* Timeline */}
-                    <div className="timeline">
+                    <div className="timeline" style={{ marginTop: '24px' }}>
                         <div className="timeline-item">
                             <div className="time-dot active" />
                             <div className="timeline-label">CURRENT LOCATION</div>
-                            <div className="timeline-text">Main St & 5th Ave Intersection</div>
+                            <div className="timeline-text">Awaiting Driver Arrival</div>
                         </div>
                         <div className="timeline-item">
                             <div className="time-dot" style={{ background: 'transparent' }} />
                             <div className="timeline-label" style={{ color: 'var(--rider-text-muted)' }}>PICKUP POINT</div>
-                            <div className="timeline-text">1244 Grand Central Terminal, NY</div>
+                            <div className="timeline-text">Requested Location</div>
                         </div>
                     </div>
 
@@ -137,11 +160,6 @@ export default function TripTracking() {
                     <div className="tracking-actions">
                         <button><Share2 size={18} /> Share Trip</button>
                         <button><Shield size={18} /> Safety</button>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '12px', marginBottom: '8px' }}>
-                        <button className="message-btn"><MessageSquare size={18} /> Message Marcus</button>
-                        <button className="call-btn"><Phone size={20} /></button>
                     </div>
 
                     <div
@@ -157,18 +175,22 @@ export default function TripTracking() {
 
                 </div>
 
-                {/* Fixed Footer Payment Receipt Style */}
+                {/* Fixed Footer Payment */}
                 <div style={{ background: 'var(--rider-bg-input)', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--rider-border)', borderBottomLeftRadius: '16px', borderBottomRightRadius: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ background: '#2563eb', padding: '6px', borderRadius: '4px' }}><CreditCard size={16} color="white" /></div>
+                        <div style={{ background: 'rgba(16, 185, 129, 0.2)', padding: '6px', borderRadius: '4px' }}>
+                            <CreditCard size={16} color="#10b981" />
+                        </div>
                         <div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--rider-text-muted)' }}>PAYMENT</div>
-                            <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>Visa •••• 4242</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--rider-text-muted)', fontWeight: 700, letterSpacing: '0.05em' }}>WALLET BALANCE</div>
+                            <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>Account</div>
                         </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: '0.75rem', color: 'var(--rider-text-muted)' }}>FARE</div>
-                        <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>$24.50</div>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>
+                            {tripDetails?.fare ? `$${tripDetails.fare.toFixed(2)}` : '--'}
+                        </div>
                     </div>
                 </div>
 

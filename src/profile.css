@@ -1,8 +1,9 @@
 .profile-layout {
-    width: 100vw;
-    height: 100vh;
-    background: #0f172a;
-    /* Dark bg consistent with driver/rider theme */
+    
+    background: radial-gradient(circle at top right, rgba(30, 58, 138, 0.4), transparent 40%),
+        radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.15), transparent 40%),
+        #0b0f19;
+    /* Cinematic dark theme with subtle jewel-toned lighting */
     color: white;
     font-family: 'Inter', system-ui, sans-serif;
     overflow-y: auto;
@@ -14,13 +15,15 @@
 .profile-container {
     width: 100%;
     max-width: 600px;
-    background: rgba(30, 41, 59, 0.8);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 24px;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 28px;
     padding: 32px;
     position: relative;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .back-btn {
@@ -50,6 +53,7 @@
     align-items: center;
     margin-bottom: 40px;
     margin-top: 16px;
+    position: relative;
 }
 
 .profile-avatar-wrapper {
@@ -57,10 +61,22 @@
     width: 120px;
     height: 120px;
     border-radius: 50%;
-    background: #334155;
-    border: 4px solid #3b82f6;
+    background: #1e293b;
+    padding: 4px;
+    background: linear-gradient(135deg, #3b82f6, #10b981);
     margin-bottom: 24px;
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+    animation: breathe 4s ease-in-out infinite alternate;
+}
+
+@keyframes breathe {
+    0% {
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    }
+
+    100% {
+        box-shadow: 0 0 40px rgba(59, 130, 246, 0.6);
+    }
 }
 
 .profile-avatar-wrapper img {
@@ -68,13 +84,14 @@
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
+    border: 3px solid #0b0f19;
 }
 
 .edit-avatar-btn {
     position: absolute;
     bottom: 0;
     right: 0;
-    background: #3b82f6;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
     border: none;
     color: white;
     width: 36px;
@@ -84,12 +101,13 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    transition: transform 0.2s;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.5);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .edit-avatar-btn:hover {
-    transform: scale(1.1);
+    transform: scale(1.15) rotate(10deg);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.7);
 }
 
 .profile-name {
@@ -155,33 +173,44 @@
 .form-label {
     display: block;
     font-size: 0.85rem;
-    color: #cbd5e1;
+    color: #94a3b8;
     margin-bottom: 8px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
 }
 
 .form-input {
     width: 100%;
-    background: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     color: white;
-    padding: 14px 16px;
-    border-radius: 12px;
+    padding: 16px;
+    border-radius: 14px;
     font-size: 1rem;
-    transition: border-color 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-sizing: border-box;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .form-input:focus {
     outline: none;
+    background: rgba(15, 23, 42, 0.8);
     border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    transform: translateY(-1px);
+}
+
+.form-input:hover:not(:disabled) {
+    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(15, 23, 42, 0.6);
 }
 
 .form-input:disabled {
-    background: rgba(15, 23, 42, 0.3);
-    color: #94a3b8;
+    background: rgba(15, 23, 42, 0.2);
+    color: #64748b;
     border-color: transparent;
     cursor: not-allowed;
+    box-shadow: none;
 }
 
 .stats-grid {
@@ -192,46 +221,86 @@
 }
 
 .stat-card {
-    background: rgba(15, 23, 42, 0.6);
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
     border: 1px solid rgba(255, 255, 255, 0.05);
-    padding: 20px;
-    border-radius: 16px;
+    padding: 24px 20px;
+    border-radius: 20px;
     text-align: center;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+}
+
+/* Subtle glowing accent line on top of stat cards */
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+    opacity: 0.5;
 }
 
 .stat-value {
-    font-size: 1.8rem;
-    font-weight: 700;
+    font-size: 2.2rem;
+    font-weight: 800;
     color: white;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    text-shadow: 0 2px 10px rgba(255, 255, 255, 0.2);
 }
 
 .stat-label {
     font-size: 0.75rem;
     color: #94a3b8;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.1em;
+    font-weight: 600;
 }
 
 .save-btn {
     width: 100%;
-    background: #3b82f6;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
     color: white;
     border: none;
-    padding: 16px;
-    border-radius: 12px;
-    font-size: 1rem;
-    font-weight: 600;
+    padding: 18px;
+    border-radius: 16px;
+    font-size: 1.05rem;
+    font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
-    margin-top: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    margin-top: 24px;
+    position: relative;
+    overflow: hidden;
+}
+
+.save-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transform: skewX(-20deg);
+    transition: left 0.5s;
 }
 
 .save-btn:hover {
-    background: #2563eb;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(59, 130, 246, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.save-btn:hover::after {
+    left: 200%;
 }
 
 .role-toggle {

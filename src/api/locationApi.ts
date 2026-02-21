@@ -1,8 +1,11 @@
 import { apiClient } from './client';
 
 export interface LocationUpdateDto {
+    driverId: string;
     lat: number;
     lng: number;
+    timestamp: string;
+    tripId?: string;
     heading?: number;
     speed?: number;
 }

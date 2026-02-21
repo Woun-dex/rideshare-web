@@ -5,16 +5,30 @@ import { useAcceptTrip } from '../hooks/useTripHooks';
 import TripMap from '../components/TripMap';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Car, Crosshair, Layers } from 'lucide-react';
+import type { EventEnvelope } from '../api/eventTypes';
 import '../driver.css';
 
 export default function DriverDashboard() {
     const navigate = useNavigate();
     const [isOnline, setIsOnline] = useState(false);
-    const [tripOffer, setTripOffer] = useState<any>(null); // Details of incoming trip
+    const [tripOffer, setTripOffer] = useState<EventEnvelope | null>(null); // Details of incoming trip matching Kafka event
     const { mutate: updateStatus } = useUpdateDriverStatus();
     const { mutate: acceptTrip } = useAcceptTrip();
 
-    const driverLocation = { lat: 40.7580, lng: -73.9855 };
+    const [driverLocation, setDriverLocation] = useState<{ lat: number, lng: number } | null>(null);
+
+    useEffect(() => {
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(position => {
+                setDriverLocation({
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                });
+            }, (error) => {
+                console.error("Error getting location: ", error);
+            });
+        }
+    }, []);
 
     const { isConnected, on, off } = useWebSocket({
         path: isOnline ? '/ws/driver/notifications' : null
@@ -23,21 +37,16 @@ export default function DriverDashboard() {
     useEffect(() => {
         if (!isConnected) return;
 
-        // Listen for trip offer
-        const handleTripOffer = (payload: any) => {
-            console.log("Trip offer received via WS:", payload);
+        // Listen for new trip request from Kafka topic
+        const handleTripOffer = (payload: EventEnvelope) => {
+            console.log("Trip requested (Kafka Event):", payload);
             setTripOffer(payload);
         };
 
-        // Note: 'trip_offer' matches user prompt, but some backends might use 'TRIP_OFFER'.
-        // Assuming your WS sends '{ "type": "trip_offer", ... }'. 
-        // Modify the event string based on your exact WebSocket message payload 'type'.
-        on('trip_offer', handleTripOffer);
-        on('TRIP_OFFER', handleTripOffer); // Listening to both case-variants just in case
+        on('TRIP_REQUESTED', handleTripOffer);
 
         return () => {
-            off('trip_offer', handleTripOffer);
-            off('TRIP_OFFER', handleTripOffer);
+            off('TRIP_REQUESTED', handleTripOffer);
         };
     }, [isConnected, on, off]);
 
@@ -51,11 +60,11 @@ export default function DriverDashboard() {
 
     const handleAccept = () => {
         if (!tripOffer) return;
-        acceptTrip(tripOffer.id || tripOffer.tripId, {
+        acceptTrip(tripOffer.tripId, {
             onSuccess: () => {
-                alert('Trip Accepted!');
+                const id = tripOffer.tripId;
                 setTripOffer(null);
-                // Usually redirect to tracking view here for driver, e.g. navigate(`/driver/track/${tripOffer.id}`)
+                navigate(`/driver/track/${id}`);
             },
             onError: (err) => {
                 console.error("Failed to accept", err);
@@ -72,24 +81,32 @@ export default function DriverDashboard() {
         <div className="driver-layout">
             <div className="driver-map-layer">
                 <TripMap
-                    driverLat={driverLocation.lat}
-                    driverLng={driverLocation.lng}
+                    driverLat={driverLocation?.lat}
+                    driverLng={driverLocation?.lng}
                     isTracking={false}
-                    // Show route preview if an offer exists
-                    pickupLat={tripOffer?.pickupLat}
-                    pickupLng={tripOffer?.pickupLng}
-                    dropoffLat={tripOffer?.dropoffLat}
-                    dropoffLng={tripOffer?.dropoffLng}
+                    // Show route preview if an offer exists mapping to EventEnvelope payload
+                    pickupLat={tripOffer?.pickup?.latitude}
+                    pickupLng={tripOffer?.pickup?.longitude}
+                    dropoffLat={tripOffer?.dropoff?.latitude}
+                    dropoffLng={tripOffer?.dropoff?.longitude}
                 />
             </div>
 
             {/* Top Bar */}
             <div className="driver-top-bar">
-                <div className="driver-logo">
-                    <div className="car-icon-box">
-                        <Car size={20} color="white" />
+                <div style={{ display: 'flex', gap: '48px', alignItems: 'center' }}>
+                    <div className="driver-logo">
+                        <div className="car-icon-box">
+                            <Car size={20} color="white" />
+                        </div>
+                        DriveSync
                     </div>
-                    DriveSync
+                    {/* Navigation matching History */}
+                    <nav className="header-nav" style={{ display: 'flex', gap: '32px' }}>
+                        <a className="active" style={{ color: '#3b82f6', fontWeight: 500 }}>Dashboard</a>
+                        <a onClick={() => navigate('/driver/history')} style={{ cursor: 'pointer', color: '#94a3b8', fontWeight: 500 }}>Trips</a>
+                        <a style={{ color: '#94a3b8', fontWeight: 500 }}>Wallet</a>
+                    </nav>
                 </div>
 
                 <div className="status-toggle-container">
@@ -110,7 +127,7 @@ export default function DriverDashboard() {
                 <div className="driver-stats">
                     <div className="earnings">
                         <div className="earnings-label">TODAY'S EARNINGS</div>
-                        <div className="earnings-value">$142.50</div>
+                        <div className="earnings-value">$0.00</div>
                     </div>
                     <div className="user-avatar-small" style={{ cursor: 'pointer' }} onClick={() => navigate('/profile')}>
                         <img src="https://i.pravatar.cc/100?img=11" alt="driver" style={{ width: '100%', height: '100%', borderRadius: '50%' }} />
@@ -120,15 +137,24 @@ export default function DriverDashboard() {
 
             {/* Bottom Floating Map Controls */}
             <div className="driver-bottom-actions">
-                <button className="icon-btn"><Crosshair size={20} /></button>
+                <button className="icon-btn" onClick={() => {
+                    if ("geolocation" in navigator) {
+                        navigator.geolocation.getCurrentPosition(position => {
+                            setDriverLocation({
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude
+                            });
+                        });
+                    }
+                }}><Crosshair size={20} /></button>
                 <button className="icon-btn"><Layers size={20} /></button>
             </div>
 
             {/* Bottom Floating Banner (Surge) */}
             <div className="surge-banner">
-                <span className="surge-dot"></span> <span style={{ color: 'white', fontWeight: 600 }}>High Demand Area</span>
+                <span className="surge-dot"></span> <span style={{ color: 'white', fontWeight: 600 }}>Ready to drive</span>
                 <span style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.2)' }}></span>
-                <span className="surge-text">Earn <span className="surge-multiplier">1.5x</span> Surge in Downtown</span>
+                <span className="surge-text">Waiting for requests in your area</span>
             </div>
 
             {/* Trip Offer Card */}
@@ -138,16 +164,16 @@ export default function DriverDashboard() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Bell size={16} /> NEW TRIP REQUEST
                         </div>
-                        <span className="offer-timer">24s remaining</span>
+                        <span className="offer-timer">Waiting...</span>
                     </div>
 
                     <div className="offer-stats">
                         <div className="offer-price">
-                            ${tripOffer.fare?.toFixed(2) || '18.20'}
+                            ${tripOffer.fare?.toFixed(2) || '0.00'}
                             <div className="est-earnings">Est. Earnings</div>
                         </div>
                         <div className="offer-distance">
-                            {tripOffer.distance || '1.4 mi'}
+                            -- mi
                             <div className="est-earnings">Pickup distance</div>
                         </div>
                     </div>
@@ -157,8 +183,8 @@ export default function DriverDashboard() {
                             <img src="https://i.pravatar.cc/100?img=5" alt="rider" />
                         </div>
                         <div>
-                            <div className="rider-name">{tripOffer.riderName || 'Sarah Jenkins'}</div>
-                            <div className="rider-rating">★ 4.9 • 12 min trip</div>
+                            <div className="rider-name">{"Rider " + (tripOffer.riderId?.substring(0, 4) || '')}</div>
+                            <div className="rider-rating">★ 5.0 • Standard Trip</div>
                         </div>
                     </div>
 
@@ -168,14 +194,14 @@ export default function DriverDashboard() {
                             <div className="loc-dot pickup" />
                             <div>
                                 <div className="loc-label">PICKUP</div>
-                                <div className="loc-address">{tripOffer.pickupAddress || 'Grand Central Station, 89 E 42nd St'}</div>
+                                <div className="loc-address">{tripOffer.pickup?.address || 'Requested Location'}</div>
                             </div>
                         </div>
                         <div className="loc-row">
                             <div className="loc-dot dropoff" />
                             <div>
                                 <div className="loc-label">DROPOFF</div>
-                                <div className="loc-address">{tripOffer.dropoffAddress || 'Museum of Modern Art, W 53rd St'}</div>
+                                <div className="loc-address">{tripOffer.dropoff?.address || 'Target Location'}</div>
                             </div>
                         </div>
                     </div>

@@ -60,8 +60,8 @@ export class WebSocketClient {
                 // General message handler (optional)
                 this.options.onMessage?.(parsed);
 
-                // Normalized event dispatcher. Assumes messages shape: { type: string, payload: any }
-                const type = parsed.type || 'message';
+                // Normalized event dispatcher. Assumes messages shape matching EventEnvelope
+                const type = parsed.eventType || parsed.type || 'message';
                 const payload = parsed.payload !== undefined ? parsed.payload : parsed;
                 this.emit(type, payload);
             } catch (e) {

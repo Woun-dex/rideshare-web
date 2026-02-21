@@ -1,39 +1,65 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit2, Camera, Star } from 'lucide-react';
+import { useProfile, useUpdateProfile } from '../api/userApi';
 import '../profile.css';
 
 export default function Profile() {
     const navigate = useNavigate();
+    const { data: profile, isLoading, isError } = useProfile();
+    const updateProfileMutation = useUpdateProfile();
 
-    // Mock initial user state
-    const [isDriver, setIsDriver] = useState(false); // Toggle for demo purposes
     const [isEditing, setIsEditing] = useState(false);
 
     const [form, setForm] = useState({
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@example.com',
-        phone: '+1 (555) 123-4567',
+        name: '',
+        email: '',
+        phone: '',
         // Driver specific
-        vehicleMake: 'Tesla',
-        vehicleModel: 'Model 3',
-        vehicleYear: '2022',
-        licensePlate: '7YJR842',
-        color: 'Midnight Silver'
+        vehicleMake: '',
+        vehicleModel: '',
+        vehicleYear: '',
+        licensePlate: '',
+        color: ''
     });
 
+    useEffect(() => {
+        if (profile) {
+            setForm(prev => ({
+                ...prev,
+                name: profile.name || '',
+                email: profile.email || '',
+                phone: profile.phone || '',
+            }));
+        }
+    }, [profile]);
+
     const driverStats = {
-        rating: 4.98,
+        rating: 4.98, // Keeping stats static for now as they aren't in the base user profile
         totalTrips: 2450,
         yearsActive: 2
     };
 
     const handleSave = () => {
-        // Here you would make an API call to PUT /api/users/profile or similar
-        setIsEditing(false);
-        alert('Profile saved successfully!');
+        updateProfileMutation.mutate({
+            name: form.name,
+            email: form.email,
+            phone: form.phone
+        }, {
+            onSuccess: () => {
+                setIsEditing(false);
+                alert('Profile saved successfully!');
+            },
+            onError: () => {
+                alert('Failed to save profile.');
+            }
+        });
     };
+
+    if (isLoading) return <div className="profile-layout"><div className="profile-container">Loading profile...</div></div>;
+    if (isError) return <div className="profile-layout"><div className="profile-container">Error loading profile.</div></div>;
+
+    const isDriver = profile?.role === 'DRIVER';
 
     return (
         <div className="profile-layout">
@@ -51,7 +77,7 @@ export default function Profile() {
                             </button>
                         )}
                     </div>
-                    <div className="profile-name">{form.firstName} {form.lastName}</div>
+                    <div className="profile-name">{form.name}</div>
                     <div className={`profile-role-badge ${isDriver ? 'driver' : 'rider'}`}>
                         {isDriver ? 'Driver Partner' : 'Rider'}
                     </div>
@@ -67,27 +93,15 @@ export default function Profile() {
                         )}
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                        <div className="form-group">
-                            <label className="form-label">First Name</label>
-                            <input
-                                type="text"
-                                className="form-input"
-                                value={form.firstName}
-                                onChange={e => setForm({ ...form, firstName: e.target.value })}
-                                disabled={!isEditing}
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Last Name</label>
-                            <input
-                                type="text"
-                                className="form-input"
-                                value={form.lastName}
-                                onChange={e => setForm({ ...form, lastName: e.target.value })}
-                                disabled={!isEditing}
-                            />
-                        </div>
+                    <div className="form-group">
+                        <label className="form-label">Full Name</label>
+                        <input
+                            type="text"
+                            className="form-input"
+                            value={form.name}
+                            onChange={e => setForm({ ...form, name: e.target.value })}
+                            disabled={!isEditing}
+                        />
                     </div>
 
                     <div className="form-group">
@@ -194,18 +208,14 @@ export default function Profile() {
                 )}
 
                 {isEditing && (
-                    <button className="save-btn" onClick={handleSave}>
-                        Save Changes
+                    <button
+                        className="save-btn"
+                        onClick={handleSave}
+                        disabled={updateProfileMutation.isPending}
+                    >
+                        {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
                     </button>
                 )}
-
-                {/* For Demonstration ONLY - toggle user role view */}
-                <div className="role-toggle">
-                    Demo: Viewing as {isDriver ? 'Driver' : 'Rider'}.
-                    <button onClick={() => setIsDriver(!isDriver)}>
-                        Switch to {isDriver ? 'Rider' : 'Driver'} view
-                    </button>
-                </div>
             </div>
         </div>
     );
