@@ -28,8 +28,10 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-    token: string
-    user: UserProfile
+    userId: string
+    name: string
+    email: string
+    role: string
 }
 
 export interface UserProfile {
@@ -53,17 +55,20 @@ const loginUser = async (data: LoginRequest): Promise<LoginResponse> => {
 }
 
 const getProfile = async (): Promise<UserProfile> => {
-    const response = await apiClient.get('/api/users/me')
+    const userId = localStorage.getItem('userId')
+    const response = await apiClient.get('/api/users/me', { params: { userId } })
     return response.data
 }
 
 const updateProfile = async (data: Partial<UserProfile>): Promise<UserProfile> => {
-    const response = await apiClient.put('/api/users/me', data)
+    const userId = localStorage.getItem('userId')
+    const response = await apiClient.put('/api/users/me', data, { params: { userId } })
     return response.data
 }
 
 const deleteProfile = async (): Promise<void> => {
-    await apiClient.delete('/api/users/me')
+    const userId = localStorage.getItem('userId')
+    await apiClient.delete('/api/users/me', { params: { userId } })
 }
 
 // --- Hooks ---
@@ -78,9 +83,8 @@ export const useLoginUser = () => {
     return useMutation({
         mutationFn: loginUser,
         onSuccess: (data) => {
-            if (data.token) {
-                localStorage.setItem('token', data.token)
-            }
+            localStorage.setItem('userId', data.userId)
+            localStorage.setItem('userRole', data.role)
         }
     })
 }
@@ -110,7 +114,8 @@ export const useDeleteProfile = () => {
         mutationFn: deleteProfile,
         onSuccess: () => {
             queryClient.clear() // Clear cache
-            localStorage.removeItem('token') // Clean up token
+            localStorage.removeItem('userId')
+            localStorage.removeItem('userRole')
         }
     })
 }

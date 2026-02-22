@@ -243,8 +243,8 @@ export default function SignUp() {
                     )}
 
                     {registerError && (
-                        <div className="field-error" style={{ marginTop: '1rem', textAlign: 'center' }}>
-                            Registration failed. Please try again.
+                        <div className="field-error" style={{ marginTop: '1rem', textAlign: 'center', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '12px', borderRadius: '8px' }}>
+                            {(registerError as any).response?.data?.message || 'Registration failed. Please try again.'}
                         </div>
                     )}
                 </form>

@@ -13,10 +13,7 @@ export const apiClient = axios.create({
 
 // Optional: Add request/response interceptors here (e.g., to attach auth tokens)
 apiClient.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token')
-    if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`
-    }
+    // No JWT for MVP — userId passed as query param per request
     return config
 })
 

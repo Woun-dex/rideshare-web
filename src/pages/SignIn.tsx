@@ -1,7 +1,9 @@
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { useLoginUser } from '../api/userApi'
 
 const signInSchema = z.object({
     email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
@@ -11,6 +13,10 @@ const signInSchema = z.object({
 type SignInData = z.infer<typeof signInSchema>
 
 export default function SignIn() {
+    const navigate = useNavigate()
+    const { mutateAsync: login } = useLoginUser()
+    const [loginError, setLoginError] = useState<string | null>(null)
+
     const {
         register,
         handleSubmit,
@@ -20,8 +26,21 @@ export default function SignIn() {
     })
 
     const onSubmit = async (data: SignInData) => {
-        // TODO: integrate with API
-        console.log('Sign in:', data)
+        try {
+            setLoginError(null)
+            const response = await login(data)
+
+            const userRole = response.role
+
+            if (userRole === 'DRIVER') {
+                navigate('/driver')
+            } else {
+                navigate('/request-trip')
+            }
+        } catch (error: any) {
+            setLoginError(error.response?.data?.message || 'Failed to sign in. Please check your credentials.')
+            console.error('Sign in error:', error)
+        }
     }
 
     return (
@@ -33,6 +52,12 @@ export default function SignIn() {
                     <h1>Welcome Back</h1>
                     <p>Sign in to your RideShare account</p>
                 </div>
+
+                {loginError && (
+                    <div className="auth-error-message" style={{ color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '14px', textAlign: 'center' }}>
+                        {loginError}
+                    </div>
+                )}
 
                 {/* Form */}
                 <form className="auth-form" onSubmit={handleSubmit(onSubmit)} noValidate>
