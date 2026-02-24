@@ -1,37 +1,39 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useUpdateDriverStatus } from '../hooks/useDriverHooks';
 import { useAcceptTrip } from '../hooks/useTripHooks';
+import { useDriverLocationTracking } from '../hooks/useDriverLocationTracking';
 import TripMap from '../components/TripMap';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Car, Crosshair, Layers } from 'lucide-react';
+import { Bell, Car, Crosshair, Layers, User } from 'lucide-react';
 import type { EventEnvelope } from '../api/eventTypes';
 import '../driver.css';
 
 export default function DriverDashboard() {
     const navigate = useNavigate();
-    const [isOnline, setIsOnline] = useState(false);
+    const [isOnline, setIsOnline] = useState(() => localStorage.getItem('driverIsOnline') === 'true');
     const [tripOffer, setTripOffer] = useState<EventEnvelope | null>(null); // Details of incoming trip matching Kafka event
     const { mutate: updateStatus } = useUpdateDriverStatus();
     const { mutate: acceptTrip } = useAcceptTrip();
 
-    const [driverLocation, setDriverLocation] = useState<{ lat: number, lng: number } | null>(null);
+    const driverId = localStorage.getItem('userId') || '';
 
-    useEffect(() => {
-        if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition(position => {
-                setDriverLocation({
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                });
-            }, (error) => {
-                console.error("Error getting location: ", error);
-            });
-        }
+    // Stream location to the backend when the driver is online so they can be matched
+    const { lat: driverLat, lng: driverLng } = useDriverLocationTracking({
+        driverId,
+        isTracking: isOnline,
+        intervalMs: 5000
+    });
+
+    // Ref to hold the manual re-center function provided by TripMap
+    const recenterFnRef = useRef<(() => void) | null>(null);
+    const handleRecenterReady = useCallback((fn: () => void) => {
+        recenterFnRef.current = fn;
     }, []);
 
     const { isConnected, on, off } = useWebSocket({
-        path: isOnline ? '/ws/driver/notifications' : null
+        path: isOnline ? '/ws/driver/notifications' : null,
+        queryParams: { driverId: localStorage.getItem('userId') || '' }
     });
 
     useEffect(() => {
@@ -52,6 +54,7 @@ export default function DriverDashboard() {
 
     const handleToggleOnline = (newStatus: boolean) => {
         setIsOnline(newStatus);
+        localStorage.setItem('driverIsOnline', String(newStatus));
         updateStatus({ status: newStatus ? 'ONLINE' : 'OFFLINE' });
         if (!newStatus) {
             setTripOffer(null);
@@ -81,9 +84,11 @@ export default function DriverDashboard() {
         <div className="driver-layout">
             <div className="driver-map-layer">
                 <TripMap
-                    driverLat={driverLocation?.lat}
-                    driverLng={driverLocation?.lng}
+                    driverLat={driverLat}
+                    driverLng={driverLng}
                     isTracking={false}
+                    centerOnDriver={isOnline}
+                    onRecenterReady={handleRecenterReady}
                     // Show route preview if an offer exists mapping to EventEnvelope payload
                     pickupLat={tripOffer?.pickup?.latitude}
                     pickupLng={tripOffer?.pickup?.longitude}
@@ -99,7 +104,7 @@ export default function DriverDashboard() {
                         <div className="car-icon-box">
                             <Car size={20} color="white" />
                         </div>
-                        DriveSync
+                        RideShare
                     </div>
                     {/* Navigation matching History */}
                     <nav className="header-nav" style={{ display: 'flex', gap: '32px' }}>
@@ -129,24 +134,15 @@ export default function DriverDashboard() {
                         <div className="earnings-label">TODAY'S EARNINGS</div>
                         <div className="earnings-value">$0.00</div>
                     </div>
-                    <div className="user-avatar-small" style={{ cursor: 'pointer' }} onClick={() => navigate('/profile')}>
-                        <img src="https://i.pravatar.cc/100?img=11" alt="driver" style={{ width: '100%', height: '100%', borderRadius: '50%' }} />
+                    <div className="user-avatar-small" style={{ cursor: 'pointer', background: 'linear-gradient(135deg, #facc15, #ebb305)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => navigate('/profile')}>
+                        <User size={20} color="white" />
                     </div>
                 </div>
             </div>
 
             {/* Bottom Floating Map Controls */}
             <div className="driver-bottom-actions">
-                <button className="icon-btn" onClick={() => {
-                    if ("geolocation" in navigator) {
-                        navigator.geolocation.getCurrentPosition(position => {
-                            setDriverLocation({
-                                lat: position.coords.latitude,
-                                lng: position.coords.longitude
-                            });
-                        });
-                    }
-                }}><Crosshair size={20} /></button>
+                <button className="icon-btn" onClick={() => recenterFnRef.current?.()}><Crosshair size={20} /></button>
                 <button className="icon-btn"><Layers size={20} /></button>
             </div>
 
@@ -179,8 +175,8 @@ export default function DriverDashboard() {
                     </div>
 
                     <div className="offer-rider-info">
-                        <div className="rider-avatar">
-                            <img src="https://i.pravatar.cc/100?img=5" alt="rider" />
+                        <div className="rider-avatar" style={{ overflow: 'hidden', background: 'linear-gradient(135deg, #facc15, #ebb305)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <User size={24} color="white" />
                         </div>
                         <div>
                             <div className="rider-name">{"Rider " + (tripOffer.riderId?.substring(0, 4) || '')}</div>

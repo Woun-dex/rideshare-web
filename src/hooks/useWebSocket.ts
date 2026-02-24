@@ -3,6 +3,7 @@ import { WebSocketClient } from '../api/websocketClient';
 
 interface UseWebSocketOptions {
     path: string | null; // e.g., '/ws/location' or null to avoid connecting yet
+    queryParams?: Record<string, string>;
     onConnect?: () => void;
     onDisconnect?: () => void;
     onMessage?: (data: any) => void;
@@ -11,7 +12,7 @@ interface UseWebSocketOptions {
 /**
  * A standard React hook to implement our resilient WebSocket Client setup into a component lifecycle.
  */
-export function useWebSocket({ path, onConnect, onDisconnect, onMessage }: UseWebSocketOptions) {
+export function useWebSocket({ path, queryParams, onConnect, onDisconnect, onMessage }: UseWebSocketOptions) {
     const wsRef = useRef<WebSocketClient | null>(null);
     const [isConnected, setIsConnected] = useState(false);
 
@@ -21,6 +22,7 @@ export function useWebSocket({ path, onConnect, onDisconnect, onMessage }: UseWe
 
         const client = new WebSocketClient({
             path,
+            queryParams,
             onConnect: () => {
                 setIsConnected(true);
                 onConnect?.();

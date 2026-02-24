@@ -36,6 +36,14 @@ export const locationApi = {
     /** Get single driver position */
     getDriverLocation: async (id: string): Promise<DriverLocationDto> => {
         const response = await apiClient.get(`/api/location/driver/${id}`);
-        return response.data;
+        const raw = response.data;
+        // Backend returns "lon", frontend uses "lng"
+        return {
+            driverId: raw.driverId || id,
+            lat: raw.lat,
+            lng: raw.lng ?? raw.lon,
+            heading: raw.heading,
+            lastUpdated: raw.lastUpdated || raw.timestamp,
+        };
     },
 };

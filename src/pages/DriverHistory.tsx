@@ -1,9 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Bell, ChevronLeft, ChevronRight, MessageSquare, CreditCard, RotateCcw } from 'lucide-react';
+import { Search, Bell, ChevronLeft, ChevronRight, MessageSquare, CreditCard, RotateCcw, User } from 'lucide-react';
 import TripMap from '../components/TripMap';
 import { useGetTripHistory } from '../hooks/useTripHooks';
 import '../driver-history.css';
+
+const STATUS_FILTERS = ['ALL', 'COMPLETED', 'CANCELLED', 'IN_PROGRESS', 'ASSIGNED', 'REQUESTED'] as const;
+type StatusFilter = typeof STATUS_FILTERS[number];
 
 export default function DriverHistory() {
     const navigate = useNavigate();
@@ -21,14 +24,12 @@ export default function DriverHistory() {
             pickupFull: `Lat: ${trip.pickupLat.toFixed(2)}, Lng: ${trip.pickupLng.toFixed(2)}`,
             dropoffFull: `Lat: ${trip.dropoffLat.toFixed(2)}, Lng: ${trip.dropoffLng.toFixed(2)}`,
             fare: trip.fare || 0,
-            rating: 5.0, // Mock
             status: trip.status,
             distanceMi: 5.0, // Mock
             baseFare: (trip.fare || 0) * 0.7,
             serviceFee: (trip.fare || 0) * 0.2,
             taxes: (trip.fare || 0) * 0.1,
             riderName: 'Rider ' + trip.riderId.substring(0, 4),
-            riderRating: 4.8, // Mock
             vehicleType: 'STANDARD',
             requestedTime: new Date(trip.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
             arrivedTime: '--',
@@ -41,14 +42,20 @@ export default function DriverHistory() {
 
     const [selectedTripId, setSelectedTripId] = useState<string>('');
     const [showToast, setShowToast] = useState(false);
+    const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
+
+    const filteredTrips = useMemo(() => {
+        if (statusFilter === 'ALL') return trips;
+        return trips.filter(t => t.status === statusFilter);
+    }, [trips, statusFilter]);
 
     useEffect(() => {
-        if (trips.length > 0 && !selectedTripId) {
-            setSelectedTripId(trips[0].id);
+        if (filteredTrips.length > 0 && !filteredTrips.find(t => t.id === selectedTripId)) {
+            setSelectedTripId(filteredTrips[0].id);
         }
-    }, [trips, selectedTripId]);
+    }, [filteredTrips, selectedTripId]);
 
-    const selectedTrip = trips.find(t => t.id === selectedTripId) || trips[0];
+    const selectedTrip = filteredTrips.find(t => t.id === selectedTripId) || filteredTrips[0];
 
     // Simulate loading details toast when changing trips
     useEffect(() => {
@@ -68,7 +75,7 @@ export default function DriverHistory() {
                 <div className="car-icon-box-blue">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z" /></svg>
                 </div>
-                RIDEFLOW
+                RideShare
             </div>
             <nav className="header-nav">
                 <a onClick={() => navigate('/driver')} style={{ cursor: 'pointer' }}>Dashboard</a>
@@ -82,7 +89,9 @@ export default function DriverHistory() {
                         <div className="name">User</div>
                         <div className="status">Driver</div>
                     </div>
-                    <img src="https://i.pravatar.cc/100?img=11" alt="Driver" className="avatar" />
+                    <div className="avatar" style={{ background: 'linear-gradient(135deg, #facc15, #ebb305)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <User size={20} color="white" />
+                    </div>
                 </div>
             </div>
         </header>
@@ -123,17 +132,32 @@ export default function DriverHistory() {
                     <div className="list-header-row">
                         <div>
                             <h1 className="page-title">Trip History</h1>
-                            <p className="page-subtitle">You have {trips.length} recent trips</p>
+                            <p className="page-subtitle">{filteredTrips.length} of {trips.length} trips</p>
                         </div>
                         <div className="list-controls">
                             <div className="search-box">
                                 <Search size={16} color="#64748b" />
                                 <input type="text" placeholder="Search trips..." />
                             </div>
-                            <button className="filter-btn">
-                                <Filter size={16} /> Filter
-                            </button>
                         </div>
+                    </div>
+
+                    {/* Status Filter Chips */}
+                    <div className="status-filter-row">
+                        {STATUS_FILTERS.map(s => (
+                            <button
+                                key={s}
+                                className={`status-filter-chip ${statusFilter === s ? 'active' : ''} ${s.toLowerCase().replace('_', '-')}`}
+                                onClick={() => setStatusFilter(s)}
+                            >
+                                {s === 'ALL' ? 'All' : s.replace('_', ' ')}
+                                {s !== 'ALL' && (
+                                    <span className="chip-count">
+                                        {trips.filter(t => t.status === s).length}
+                                    </span>
+                                )}
+                            </button>
+                        ))}
                     </div>
 
                     <div className="trip-table">
@@ -141,12 +165,11 @@ export default function DriverHistory() {
                             <div className="col-date">DATE & TIME</div>
                             <div className="col-route">ROUTE</div>
                             <div className="col-fare">FARE</div>
-                            <div className="col-rating">RATING</div>
                             <div className="col-status">STATUS</div>
                         </div>
 
                         <div className="table-body">
-                            {trips.map(trip => (
+                            {filteredTrips.map(trip => (
                                 <div
                                     key={trip.id}
                                     className={`table-row ${selectedTripId === trip.id ? 'active' : ''}`}
@@ -168,13 +191,6 @@ export default function DriverHistory() {
                                         </div>
                                     </div>
                                     <div className="col-fare font-bold">${trip.fare.toFixed(2)}</div>
-                                    <div className="col-rating">
-                                        {trip.rating ? (
-                                            <><span className="star">★</span> {trip.rating.toFixed(1)}</>
-                                        ) : (
-                                            <span className="not-rated">Not rated</span>
-                                        )}
-                                    </div>
                                     <div className="col-status">
                                         <span className={`status-pill ${trip.status.toLowerCase()}`}>
                                             {trip.status}
@@ -185,7 +201,7 @@ export default function DriverHistory() {
                         </div>
 
                         <div className="table-footer">
-                            <div className="showing-text">Showing {trips.length} of {trips.length} trips</div>
+                            <div className="showing-text">Showing {filteredTrips.length} of {trips.length} trips</div>
                             <div className="pagination">
                                 <button className="page-arrow"><ChevronLeft size={16} /></button>
                                 <button className="page-num active">1</button>
@@ -201,39 +217,25 @@ export default function DriverHistory() {
                 <aside className="trip-details-sidebar">
 
                     <div className="static-map-container">
-                        <div className="map-distance-badge">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
-                            {selectedTrip.distanceMi} mi
-                        </div>
-                        {/* Interactive map disabled for static preview, zoomed out to show route */}
-                        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
-                            <TripMap
-                                pickupLat={selectedTrip.pickupLat} pickupLng={selectedTrip.pickupLng}
-                                dropoffLat={selectedTrip.dropoffLat} dropoffLng={selectedTrip.dropoffLng}
-                            />
-                        </div>
-                        {/* Hardcoded fake path SVG for precise styling matching screenshot */}
-                        <svg className="fake-route-path" viewBox="0 0 100 100" preserveAspectRatio="none">
-                            <path d="M 30,70 C 50,70 70,40 70,30" fill="none" stroke="#3b82f6" strokeWidth="4" strokeLinecap="round" />
-                        </svg>
-                        <div className="map-marker pickup-marker-static" style={{ left: '30%', top: '70%' }}>
-                            <div className="tooltip">PICKUP</div>
-                        </div>
-                        <div className="map-marker dropoff-marker-static" style={{ left: '70%', top: '30%' }}>
-                            <div className="tooltip">DROP-OFF</div>
-                        </div>
+                        {/* Real route rendered by TripMap using Mapbox Directions API */}
+                        <TripMap
+                            pickupLat={selectedTrip.pickupLat} pickupLng={selectedTrip.pickupLng}
+                            dropoffLat={selectedTrip.dropoffLat} dropoffLng={selectedTrip.dropoffLng}
+                            routeStartLat={selectedTrip.pickupLat} routeStartLng={selectedTrip.pickupLng}
+                            routeEndLat={selectedTrip.dropoffLat} routeEndLng={selectedTrip.dropoffLng}
+                        />
                     </div>
 
                     <div className="details-content">
 
                         <div className="rider-summary-box">
-                            <div className="rider-avatar-large">
-                                <img src="https://i.pravatar.cc/100?img=12" alt="Rider" />
+                            <div className="rider-avatar-large" style={{ background: 'linear-gradient(135deg, #facc15, #ebb305)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <User size={40} color="white" />
                             </div>
                             <div className="rider-info-text">
                                 <div className="rider-name-bold">{selectedTrip.riderName}</div>
                                 <div className="rider-meta">
-                                    <span style={{ color: '#fbbf24' }}>★ {selectedTrip.riderRating}</span> • {selectedTrip.vehicleType}
+                                    {selectedTrip.vehicleType}
                                 </div>
                             </div>
                             <button className="chat-btn"><MessageSquare size={18} /></button>

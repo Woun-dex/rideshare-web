@@ -6,7 +6,7 @@
 .history-layout {
     width: 100vw;
     height: 100vh;
-    background: #0f172a;
+    background: #121212;
     color: white;
     font-family: 'Inter', system-ui, sans-serif;
     display: flex;
@@ -20,7 +20,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 16px 32px;
-    background: #1e293b;
+    background: #1e1e1e;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -35,7 +35,7 @@
 }
 
 .car-icon-box-blue {
-    background: #3b82f6;
+    background: #ebb305;
     width: 32px;
     height: 32px;
     border-radius: 8px;
@@ -60,7 +60,7 @@
 
 .header-nav a:hover,
 .header-nav a.active {
-    color: #3b82f6;
+    color: #ebb305;
 }
 
 .header-user-actions {
@@ -148,7 +148,7 @@
 .search-box {
     display: flex;
     align-items: center;
-    background: #1e293b;
+    background: #1e1e1e;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     padding: 8px 16px;
@@ -175,11 +175,62 @@
     padding: 8px 16px;
     border-radius: 8px;
     cursor: pointer;
-    background: #1e293b;
+    background: #1e1e1e;
+}
+
+/* Status Filter Chips */
+.status-filter-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scrollbar-width: thin;
+}
+
+.status-filter-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #1e1e1e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.status-filter-chip:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.status-filter-chip.active {
+    background: rgba(235, 179, 5, 0.1);
+    border-color: #ebb305;
+    color: #ebb305;
+}
+
+.chip-count {
+    background: rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.status-filter-chip.active .chip-count {
+    background: #ebb305;
+    color: #121212;
 }
 
 .trip-table {
-    background: #1e293b;
+    background: #1e1e1e;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
@@ -190,7 +241,7 @@
 
 .table-header {
     display: grid;
-    grid-template-columns: 1.5fr 2.5fr 1fr 1fr 1fr;
+    grid-template-columns: 2fr 3fr 1.5fr 1.5fr;
     padding: 16px 24px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     font-size: 0.75rem;
@@ -207,7 +258,7 @@
 
 .table-row {
     display: grid;
-    grid-template-columns: 1.5fr 2.5fr 1fr 1fr 1fr;
+    grid-template-columns: 2fr 3fr 1.5fr 1.5fr;
     padding: 24px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     align-items: center;
@@ -220,8 +271,8 @@
 }
 
 .table-row.active {
-    background: rgba(59, 130, 246, 0.1);
-    border-left: 4px solid #3b82f6;
+    background: rgba(235, 179, 5, 0.1);
+    border-left: 4px solid #ebb305;
     padding-left: 20px;
     /* offset border */
 }
@@ -257,18 +308,18 @@
 }
 
 .route-line-small .blue-dot {
-    border: 2px solid #3b82f6;
+    border: 2px solid #ebb305;
     background: transparent;
 }
 
 .route-line-small .filled-blue-dot {
-    background: #3b82f6;
+    background: #ebb305;
 }
 
 .route-line-small .line {
     width: 2px;
     height: 16px;
-    background: rgba(59, 130, 246, 0.3);
+    background: rgba(235, 179, 5, 0.3);
 }
 
 .route-text {
@@ -353,8 +404,8 @@
 }
 
 .page-num.active {
-    background: #3b82f6;
-    color: white;
+    background: #ebb305;
+    color: #121212;
 }
 
 .page-btn:hover:not(.active),
@@ -366,7 +417,7 @@
 /* Right Column: Trip Details Sidebar */
 .trip-details-sidebar {
     flex: 1;
-    background: #1e293b;
+    background: #1e1e1e;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
@@ -387,7 +438,7 @@
     top: 16px;
     right: 16px;
     z-index: 10;
-    background: rgba(15, 23, 42, 0.8);
+    background: rgba(18, 18, 18, 0.8);
     backdrop-filter: blur(4px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: white;
@@ -419,13 +470,13 @@
 }
 
 .pickup-marker-static {
-    border: 3px solid #0f172a;
-    background: #3b82f6;
-    box-shadow: 0 0 0 2px #3b82f6;
+    border: 3px solid #121212;
+    background: #10b981;
+    box-shadow: 0 0 0 2px #10b981;
 }
 
 .dropoff-marker-static {
-    background: #3b82f6;
+    background: #ebb305;
     border: 2px solid white;
 }
 
@@ -434,7 +485,7 @@
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(15, 23, 42, 0.9);
+    background: rgba(18, 18, 18, 0.9);
     color: white;
     font-size: 0.6rem;
     padding: 4px 8px;
@@ -488,7 +539,7 @@
 .chat-btn {
     background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #60a5fa;
+    color: #ebb305;
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -519,12 +570,12 @@
 }
 
 .empty-blue {
-    border: 2px solid #3b82f6;
-    background: #1e293b;
+    border: 2px solid #ebb305;
+    background: #1e1e1e;
 }
 
 .solid-blue {
-    background: #3b82f6;
+    background: #ebb305;
 }
 
 .timeline-connector {
@@ -594,14 +645,14 @@
 .total-value {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #3b82f6;
+    color: #ebb305;
 }
 
 .payment-method-box {
     display: flex;
     align-items: center;
     gap: 16px;
-    background: #0f172a;
+    background: #121212;
     border-radius: 12px;
     padding: 16px;
     margin-bottom: 24px;
@@ -625,7 +676,7 @@
 }
 
 .receipt-link {
-    color: #3b82f6;
+    color: #ebb305;
     font-size: 0.8rem;
     text-decoration: none;
 }
@@ -655,13 +706,13 @@
 }
 
 .btn-rebook {
-    background: #3b82f6;
+    background: #ebb305;
     border: none;
-    color: white;
+    color: #121212;
 }
 
 .btn-rebook:hover {
-    background: #2563eb;
+    background: #facc15;
 }
 
 /* Toast */
@@ -670,7 +721,7 @@
     bottom: 32px;
     left: 50%;
     transform: translate(-50%, 100px);
-    background: #1e293b;
+    background: #1e1e1e;
     border: 1px solid rgba(255, 255, 255, 0.1);
     padding: 12px 24px;
     border-radius: 30px;

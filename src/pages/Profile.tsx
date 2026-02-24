@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit2, Camera, Star } from 'lucide-react';
+import { ArrowLeft, Edit2, Camera, User, ExternalLink } from 'lucide-react';
 import { useProfile, useUpdateProfile } from '../api/userApi';
+import { useGetTripHistory } from '../hooks/useTripHooks';
 import '../profile.css';
 
 export default function Profile() {
     const navigate = useNavigate();
     const { data: profile, isLoading, isError } = useProfile();
     const updateProfileMutation = useUpdateProfile();
+    const { data: tripHistory } = useGetTripHistory();
 
     const [isEditing, setIsEditing] = useState(false);
 
@@ -16,11 +18,8 @@ export default function Profile() {
         email: '',
         phone: '',
         // Driver specific
-        vehicleMake: '',
-        vehicleModel: '',
-        vehicleYear: '',
-        licensePlate: '',
-        color: ''
+        vehicleInfo: '',
+        licenseNumber: ''
     });
 
     useEffect(() => {
@@ -30,21 +29,19 @@ export default function Profile() {
                 name: profile.name || '',
                 email: profile.email || '',
                 phone: profile.phone || '',
+                vehicleInfo: profile.vehicleInfo || '',
+                licenseNumber: profile.licenseNumber || '',
             }));
         }
     }, [profile]);
-
-    const driverStats = {
-        rating: 4.98, // Keeping stats static for now as they aren't in the base user profile
-        totalTrips: 2450,
-        yearsActive: 2
-    };
 
     const handleSave = () => {
         updateProfileMutation.mutate({
             name: form.name,
             email: form.email,
-            phone: form.phone
+            phone: form.phone,
+            vehicleInfo: form.vehicleInfo,
+            licenseNumber: form.licenseNumber
         }, {
             onSuccess: () => {
                 setIsEditing(false);
@@ -69,8 +66,8 @@ export default function Profile() {
                 </button>
 
                 <div className="profile-header">
-                    <div className="profile-avatar-wrapper">
-                        <img src="https://i.pravatar.cc/200?img=11" alt="Profile" />
+                    <div className="profile-avatar-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <User size={80} color="white" />
                         {isEditing && (
                             <button className="edit-avatar-btn">
                                 <Camera size={16} />
@@ -130,17 +127,13 @@ export default function Profile() {
                 {isDriver && (
                     <>
                         <div className="profile-section">
-                            <div className="section-title">Driver Statistics (View Only)</div>
-                            <div className="stats-grid">
-                                <div className="stat-card">
-                                    <div className="stat-value" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#f59e0b' }}>
-                                        <Star fill="#f59e0b" size={24} /> {driverStats.rating}
+                            <div className="section-title">Driver Statistics</div>
+                            <div className="stats-grid" style={{ gridTemplateColumns: '1fr' }}>
+                                <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/driver/history')}>
+                                    <div className="stat-value">{tripHistory ? tripHistory.length.toLocaleString() : '0'}</div>
+                                    <div className="stat-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                        Total Trips <ExternalLink size={12} />
                                     </div>
-                                    <div className="stat-label">Rating</div>
-                                </div>
-                                <div className="stat-card">
-                                    <div className="stat-value">{driverStats.totalTrips.toLocaleString()}</div>
-                                    <div className="stat-label">Total Trips</div>
                                 </div>
                             </div>
                         </div>
@@ -150,55 +143,24 @@ export default function Profile() {
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                                 <div className="form-group">
-                                    <label className="form-label">Make</label>
+                                    <label className="form-label">Vehicle Info</label>
                                     <input
                                         type="text"
                                         className="form-input"
-                                        value={form.vehicleMake}
-                                        onChange={e => setForm({ ...form, vehicleMake: e.target.value })}
+                                        placeholder="Toyota Camry 2021 (Black)"
+                                        value={form.vehicleInfo}
+                                        onChange={e => setForm({ ...form, vehicleInfo: e.target.value })}
                                         disabled={!isEditing}
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Model</label>
+                                    <label className="form-label">License Number</label>
                                     <input
                                         type="text"
                                         className="form-input"
-                                        value={form.vehicleModel}
-                                        onChange={e => setForm({ ...form, vehicleModel: e.target.value })}
-                                        disabled={!isEditing}
-                                    />
-                                </div>
-                            </div>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-                                <div className="form-group">
-                                    <label className="form-label">Year</label>
-                                    <input
-                                        type="text"
-                                        className="form-input"
-                                        value={form.vehicleYear}
-                                        onChange={e => setForm({ ...form, vehicleYear: e.target.value })}
-                                        disabled={!isEditing}
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Plate</label>
-                                    <input
-                                        type="text"
-                                        className="form-input"
-                                        value={form.licensePlate}
-                                        onChange={e => setForm({ ...form, licensePlate: e.target.value })}
-                                        disabled={!isEditing}
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Color</label>
-                                    <input
-                                        type="text"
-                                        className="form-input"
-                                        value={form.color}
-                                        onChange={e => setForm({ ...form, color: e.target.value })}
+                                        placeholder="ABC-1234567"
+                                        value={form.licenseNumber}
+                                        onChange={e => setForm({ ...form, licenseNumber: e.target.value })}
                                         disabled={!isEditing}
                                     />
                                 </div>

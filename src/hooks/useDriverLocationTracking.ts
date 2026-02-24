@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useUpdateLocation } from './useLocationHooks';
 
 /**
@@ -20,6 +20,10 @@ export function useDriverLocationTracking({
     const intervalRef = useRef<number | null>(null);
 
     // Watch position to always have the latest coords ready for the interval
+    // Use state to expose reactive values to the component
+    const [currentPos, setCurrentPos] = useState<{ lat?: number, lng?: number, heading?: number }>({});
+
+    // Also keep a ref for the interval to pick up without stale closures
     const latestPosParams = useRef<GeolocationCoordinates | null>(null);
     const watchIdRef = useRef<number | null>(null);
 
@@ -43,6 +47,11 @@ export function useDriverLocationTracking({
         watchIdRef.current = navigator.geolocation.watchPosition(
             (position) => {
                 latestPosParams.current = position.coords;
+                setCurrentPos({
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                    heading: position.coords.heading ?? undefined
+                });
             },
             (error) => {
                 console.error("[GPS Tracking] Error getting location", error);
@@ -88,10 +97,6 @@ export function useDriverLocationTracking({
 
     }, [isTracking, driverId, tripId, intervalMs, updateLocation]);
 
-    // Return the latest coordinates for UI map sync
-    return {
-        lat: latestPosParams.current?.latitude,
-        lng: latestPosParams.current?.longitude,
-        heading: latestPosParams.current?.heading
-    };
+    // Return the latest coordinates for UI map sync safely triggering re-renders
+    return currentPos;
 }

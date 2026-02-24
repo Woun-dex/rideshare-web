@@ -7,6 +7,7 @@ import DriverDashboard from './pages/DriverDashboard'
 import DriverTracking from './pages/DriverTracking'
 import DriverHistory from './pages/DriverHistory'
 import Profile from './pages/Profile'
+import MockTestHarness from './pages/MockTestHarness'
 import './App.css'
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
       <Route path="/driver/track/:tripId" element={<DriverTracking />} />
       <Route path="/driver/history" element={<DriverHistory />} />
       <Route path="/profile" element={<Profile />} />
+      <Route path="/test" element={<MockTestHarness />} />
     </Routes>
   )
 }

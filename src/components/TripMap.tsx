@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
@@ -12,6 +12,15 @@ interface MapProps {
     driverLat?: number;
     driverLng?: number;
     isTracking?: boolean; // Changes the focus of the map
+
+    // Explicit endpoints for tracking route (overrides default pickup -> dropoff)
+    routeStartLat?: number;
+    routeStartLng?: number;
+    routeEndLat?: number;
+    routeEndLng?: number;
+
+    centerOnDriver?: boolean; // When true, auto-fly to driver GPS on first fix
+    onRecenterReady?: (recenterFn: () => void) => void; // Exposes a manual re-center function
     onMapClick?: (lat: number, lng: number) => void;
     onRouteCalculated?: (distanceMiles: number, durationMins: number) => void;
 }
@@ -21,12 +30,17 @@ export default function TripMap({
     dropoffLat, dropoffLng,
     driverLat, driverLng,
     isTracking = false,
+    centerOnDriver = false,
+    routeStartLat, routeStartLng, routeEndLat, routeEndLng,
+    onRecenterReady,
     onMapClick,
     onRouteCalculated
 }: MapProps) {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null);
     const driverMarker = useRef<mapboxgl.Marker | null>(null);
+    const [mapLoaded, setMapLoaded] = useState(false);
+    const hasCenteredOnDriver = useRef(false);
     const onMapClickRef = useRef(onMapClick);
     const onRouteCalculatedRef = useRef(onRouteCalculated);
 
@@ -45,6 +59,19 @@ export default function TripMap({
                 `https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}`
             );
             const json = await query.json();
+
+            if (!json.routes || json.routes.length === 0) {
+                console.warn("Mapbox returned no routes. Falling back to straight line.", json);
+                return {
+                    type: 'Feature' as const,
+                    properties: {},
+                    geometry: {
+                        type: 'LineString' as const,
+                        coordinates: [start, end]
+                    }
+                };
+            }
+
             const data = json.routes[0];
             const route = data.geometry.coordinates;
 
@@ -86,10 +113,12 @@ export default function TripMap({
 
         map.current = new mapboxgl.Map({
             container: mapContainer.current,
-            style: 'mapbox://styles/mapbox/dark-v11', // Sleek dark mode from design
+            style: 'mapbox://styles/mapbox/dark-v11',
             center: [initLng, initLat],
-            zoom: 12,
-            pitch: 45 // Adds a 3D perspective to match modern tracking UIs
+            zoom: 14,
+            pitch: 60,
+            bearing: -17,
+            antialias: true
         });
 
         const mapInstance = map.current;
@@ -101,79 +130,82 @@ export default function TripMap({
         });
 
         mapInstance.on('load', () => {
-            // Plot markers once loaded
+            setMapLoaded(true);
+            // Pickup marker — pulsing green dot
             if (pickupLat && pickupLng) {
                 const el = document.createElement('div');
                 el.className = 'custom-marker pickup-marker';
-                el.style.backgroundColor = '#10b981';
-                el.style.width = '12px';
-                el.style.height = '12px';
-                el.style.borderRadius = '50%';
-                el.style.border = '2px solid white';
-                el.style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.8)';
-
+                el.innerHTML = `
+                    <div style="position:relative;width:20px;height:20px">
+                        <div style="position:absolute;inset:0;background:#10b981;border-radius:50%;opacity:0.3;animation:markerPulse 2s ease-out infinite"></div>
+                        <div style="position:absolute;inset:4px;background:#10b981;border-radius:50%;border:2px solid white;box-shadow:0 0 12px rgba(16,185,129,0.8)"></div>
+                    </div>
+                `;
                 new mapboxgl.Marker(el)
                     .setLngLat([pickupLng, pickupLat])
                     .addTo(mapInstance);
             }
 
+            // Dropoff marker — pulsing gold dot
             if (dropoffLat && dropoffLng) {
                 const el = document.createElement('div');
                 el.className = 'custom-marker dropoff-marker';
-                el.style.backgroundColor = '#6366f1'; // Brand blue
-                el.style.width = '12px';
-                el.style.height = '12px';
-                el.style.borderRadius = '50%';
-                el.style.border = '2px solid white';
-                el.style.boxShadow = '0 0 10px rgba(99, 102, 241, 0.8)';
-
+                el.innerHTML = `
+                    <div style="position:relative;width:20px;height:20px">
+                        <div style="position:absolute;inset:0;background:#ebb305;border-radius:50%;opacity:0.3;animation:markerPulse 2s ease-out infinite 0.5s"></div>
+                        <div style="position:absolute;inset:4px;background:#ebb305;border-radius:50%;border:2px solid white;box-shadow:0 0 12px rgba(235,179,5,0.8)"></div>
+                    </div>
+                `;
                 new mapboxgl.Marker(el)
                     .setLngLat([dropoffLng, dropoffLat])
                     .addTo(mapInstance);
             }
 
-            // Draw actual driving route line between pickup and dropoff
-            if (pickupLat && pickupLng && dropoffLat && dropoffLng) {
-                getDrivingRoute([pickupLng, pickupLat], [dropoffLng, dropoffLat]).then((route) => {
-                    if (!mapInstance.getSource('route')) {
-                        mapInstance.addSource('route', {
-                            type: 'geojson',
-                            data: route
-                        });
-
-                        mapInstance.addLayer({
-                            id: 'route-line',
-                            type: 'line',
-                            source: 'route',
-                            layout: {
-                                'line-join': 'round',
-                                'line-cap': 'round'
-                            },
-                            paint: {
-                                'line-color': '#3b82f6', // Bright blue
-                                'line-width': 4,
-                                'line-opacity': 0.8
-                            }
-                        });
-                    } else {
-                        (mapInstance.getSource('route') as mapboxgl.GeoJSONSource).setData(route);
+            // Inject pulse animation keyframes
+            if (!document.getElementById('marker-pulse-style')) {
+                const style = document.createElement('style');
+                style.id = 'marker-pulse-style';
+                style.textContent = `
+                    @keyframes markerPulse {
+                        0% { transform: scale(1); opacity: 0.4; }
+                        100% { transform: scale(2.8); opacity: 0; }
                     }
-                });
-
-                // Auto-fit bounds to show entire route
-                const bounds = new mapboxgl.LngLatBounds();
-                bounds.extend([pickupLng, pickupLat]).extend([dropoffLng, dropoffLat]);
-                if (driverLat && driverLng) {
-                    bounds.extend([driverLng, driverLat]);
-                }
-
-                // Keep padding for the sidebars (left sidebar in request, right in tracking)
-                const padding = isTracking
-                    ? { top: 100, bottom: 100, left: 100, right: 450 }
-                    : { top: 100, bottom: 100, left: 450, right: 100 };
-
-                mapInstance.fitBounds(bounds, { padding, maxZoom: 15 });
+                    @keyframes driverPulse {
+                        0% { transform: scale(1); opacity: 0.5; }
+                        100% { transform: scale(3); opacity: 0; }
+                    }
+                `;
+                document.head.appendChild(style);
             }
+
+            // 3D Building Extrusions
+            const layers = mapInstance.getStyle().layers;
+            const labelLayerId = layers?.find(
+                (layer: any) => layer.type === 'symbol' && layer.layout?.['text-field']
+            )?.id;
+
+            mapInstance.addLayer(
+                {
+                    id: '3d-buildings',
+                    source: 'composite',
+                    'source-layer': 'building',
+                    filter: ['==', 'extrude', 'true'],
+                    type: 'fill-extrusion',
+                    minzoom: 12,
+                    paint: {
+                        'fill-extrusion-color': [
+                            'interpolate', ['linear'], ['get', 'height'],
+                            0, '#18181b', // Zinc 900
+                            50, '#27272a', // Zinc 800
+                            200, '#3f3f46' // Zinc 700
+                        ],
+                        'fill-extrusion-height': ['get', 'height'],
+                        'fill-extrusion-base': ['get', 'min_height'],
+                        'fill-extrusion-opacity': 0.7
+                    }
+                },
+                labelLayerId
+            );
         });
 
         return () => {
@@ -184,6 +216,85 @@ export default function TripMap({
         };
     }, [pickupLat, pickupLng, dropoffLat, dropoffLng, isTracking]);
 
+    // Handle Route Lines Reactively
+    useEffect(() => {
+        if (!mapLoaded || !map.current) return;
+
+        let start: [number, number] | null = null;
+        let end: [number, number] | null = null;
+
+        if (routeStartLat && routeStartLng && routeEndLat && routeEndLng) {
+            start = [routeStartLng, routeStartLat];
+            end = [routeEndLng, routeEndLat];
+        } else if (pickupLat && pickupLng && dropoffLat && dropoffLng) {
+            start = [pickupLng, pickupLat];
+            end = [dropoffLng, dropoffLat];
+        }
+
+        if (start && end) {
+            const mapInstance = map.current;
+            getDrivingRoute(start, end).then((route) => {
+                if (!mapInstance.getSource('route')) {
+                    mapInstance.addSource('route', {
+                        type: 'geojson',
+                        data: route
+                    });
+
+                    // Route glow shadow layer
+                    mapInstance.addLayer({
+                        id: 'route-glow',
+                        type: 'line',
+                        source: 'route',
+                        layout: {
+                            'line-join': 'round',
+                            'line-cap': 'round'
+                        },
+                        paint: {
+                            'line-color': '#ebb305',
+                            'line-width': 12,
+                            'line-opacity': 0.15,
+                            'line-blur': 8
+                        }
+                    });
+
+                    // Main route line
+                    mapInstance.addLayer({
+                        id: 'route-line',
+                        type: 'line',
+                        source: 'route',
+                        layout: {
+                            'line-join': 'round',
+                            'line-cap': 'round'
+                        },
+                        paint: {
+                            'line-color': '#facc15',
+                            'line-width': 4,
+                            'line-opacity': 0.9
+                        }
+                    });
+                } else {
+                    (mapInstance.getSource('route') as mapboxgl.GeoJSONSource).setData(route);
+                }
+
+                // Auto-fit bounds
+                const bounds = new mapboxgl.LngLatBounds();
+                if (start) bounds.extend(start);
+                if (end) bounds.extend(end);
+
+                // Also optionally include driver in bounds
+                if (driverLat && driverLng) {
+                    bounds.extend([driverLng, driverLat]);
+                }
+
+                const padding = isTracking
+                    ? { top: 100, bottom: 100, left: 100, right: 450 }
+                    : { top: 100, bottom: 100, left: 450, right: 100 };
+
+                mapInstance.fitBounds(bounds, { padding, maxZoom: 15 });
+            });
+        }
+    }, [mapLoaded, routeStartLat, routeStartLng, routeEndLat, routeEndLng, pickupLat, pickupLng, dropoffLat, dropoffLng, driverLat, driverLng, isTracking]);
+
     // Handle real-time Driver Marker updates
     useEffect(() => {
         if (!map.current || !driverLat || !driverLng) return;
@@ -191,22 +302,57 @@ export default function TripMap({
         if (!driverMarker.current) {
             const el = document.createElement('div');
             el.className = 'driver-marker';
-            el.style.backgroundColor = 'white';
-            el.style.width = '24px';
-            el.style.height = '24px';
-            el.style.borderRadius = '50%';
-            el.style.border = '4px solid #3b82f6'; // Blue border
-            el.style.boxShadow = '0 0 15px rgba(59, 130, 246, 0.6)';
+            el.innerHTML = `
+                <div style="position:relative;width:32px;height:32px">
+                    <div style="position:absolute;inset:0;background:#ebb305;border-radius:50%;opacity:0.3;animation:driverPulse 1.5s ease-out infinite"></div>
+                    <div style="position:absolute;inset:4px;background:white;border-radius:50%;border:3px solid #ebb305;box-shadow:0 0 16px rgba(235,179,5,0.7)"></div>
+                </div>
+            `;
 
             driverMarker.current = new mapboxgl.Marker(el)
                 .setLngLat([driverLng, driverLat])
                 .addTo(map.current);
         } else {
-            // Animate existing marker
             driverMarker.current.setLngLat([driverLng, driverLat]);
         }
 
     }, [driverLat, driverLng]);
+
+    // ── Auto-fly to driver's GPS when centerOnDriver becomes true ──
+    useEffect(() => {
+        if (!centerOnDriver) {
+            // Reset so next time driver goes online it will re-center
+            hasCenteredOnDriver.current = false;
+            return;
+        }
+        if (hasCenteredOnDriver.current) return;
+        if (!map.current || !driverLat || !driverLng) return;
+
+        hasCenteredOnDriver.current = true;
+        map.current.flyTo({
+            center: [driverLng, driverLat],
+            zoom: 14,
+            pitch: 45,
+            duration: 2000
+        });
+    }, [centerOnDriver, driverLat, driverLng]);
+
+    // ── Expose manual re-center function to parent ──
+    const recenterOnDriver = useCallback(() => {
+        if (!map.current || !driverLat || !driverLng) return;
+        map.current.flyTo({
+            center: [driverLng, driverLat],
+            zoom: 15,
+            pitch: 45,
+            duration: 1200
+        });
+    }, [driverLat, driverLng]);
+
+    useEffect(() => {
+        if (onRecenterReady) {
+            onRecenterReady(recenterOnDriver);
+        }
+    }, [recenterOnDriver, onRecenterReady]);
 
     return (
         <div style={{ position: 'absolute', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 0 }}>

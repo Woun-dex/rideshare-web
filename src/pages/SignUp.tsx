@@ -207,7 +207,7 @@ export default function SignUp() {
                     {step === 2 && (
                         <>
                             <div className="step-back" style={{ marginBottom: '1rem' }}>
-                                <button type="button" onClick={() => setStep(1)} style={{ background: 'none', border: 'none', color: '#6366f1', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', padding: 0 }}>
+                                <button type="button" onClick={() => setStep(1)} style={{ background: 'none', border: 'none', color: '#ebb305', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', padding: 0 }}>
                                     ← Back to basic info
                                 </button>
                             </div>

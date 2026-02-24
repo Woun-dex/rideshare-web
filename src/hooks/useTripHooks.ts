@@ -19,8 +19,8 @@ export const useAcceptTrip = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (id: string) => tripApi.acceptTrip(id),
-        onSuccess: (data) => {
-            queryClient.invalidateQueries({ queryKey: tripKeys.detail(data.id) });
+        onSuccess: (_data, id) => {
+            queryClient.invalidateQueries({ queryKey: tripKeys.detail(id) });
         },
     });
 };
@@ -30,8 +30,8 @@ export const useUpdateTripStatus = () => {
     return useMutation({
         mutationFn: ({ id, data }: { id: string; data: TripStatusUpdateDto }) =>
             tripApi.updateStatus(id, data),
-        onSuccess: (data) => {
-            queryClient.invalidateQueries({ queryKey: tripKeys.detail(data.id) });
+        onSuccess: (_data, { id }) => {
+            queryClient.invalidateQueries({ queryKey: tripKeys.detail(id) });
         },
     });
 };

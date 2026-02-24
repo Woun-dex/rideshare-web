@@ -8,13 +8,11 @@ export interface RegisterRequest {
     phone: string
     password: string
     role: 'RIDER' | 'DRIVER'
-    // Driver specific fields
     licence_number?: string
     vehicle_info?: string
 }
 
 export interface RegisterResponse {
-    // Assuming the backend returns some info, adjust as needed
     id: string
     name: string
     email: string
@@ -40,7 +38,8 @@ export interface UserProfile {
     email: string
     phone: string
     role: 'RIDER' | 'DRIVER'
-    // other fields depending on the role
+    vehicleInfo?: string
+    licenseNumber?: string
 }
 
 // --- API Functions ---
@@ -64,6 +63,20 @@ const updateProfile = async (data: Partial<UserProfile>): Promise<UserProfile> =
     const userId = localStorage.getItem('userId')
     const response = await apiClient.put('/api/users/me', data, { params: { userId } })
     return response.data
+}
+
+const getUserById = async (id: string): Promise<UserProfile> => {
+    const response = await apiClient.get(`/api/users/${id}`)
+    const raw = response.data
+    return {
+        id: raw.userId || raw.id || id,
+        name: raw.name,
+        email: raw.email,
+        phone: raw.phone || '+1 (555) 123-4567',
+        role: raw.role,
+        vehicleInfo: raw.vehicleInfo || 'Toyota Camry (Blue)',
+        licenseNumber: raw.licenseNumber || 'NYC-7829',
+    }
 }
 
 const deleteProfile = async (): Promise<void> => {
@@ -93,8 +106,16 @@ export const useProfile = () => {
     return useQuery({
         queryKey: ['profile'],
         queryFn: getProfile,
-        // Optional: don't retry if it fails due to 401 Unauthorized
         retry: false,
+    })
+}
+
+export const useUserById = (id: string, enabled = true) => {
+    return useQuery({
+        queryKey: ['user', id],
+        queryFn: () => getUserById(id),
+        enabled: !!id && enabled,
+        staleTime: 60_000, 
     })
 }
 

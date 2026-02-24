@@ -1,13 +1,13 @@
 /* --- RIDER UI STYLES --- */
 :root {
-    --rider-bg-panel: #1a1d24;
+    --rider-bg-panel: #1e1e1e;
     /* Dark gray for sidebar */
-    --rider-bg-input: #232730;
-    --rider-accent: #2563eb;
-    /* Blue */
-    --rider-border: #2d333f;
+    --rider-bg-input: #27272a;
+    --rider-accent: #ebb305;
+    /* Gold */
+    --rider-border: #3f3f46;
     --rider-text: #f8fafc;
-    --rider-text-muted: #94a3b8;
+    --rider-text-muted: #a1a1aa;
     --rider-panel-w: 380px;
 }
 
@@ -53,9 +53,13 @@
     right: 20px;
     top: 20px;
     bottom: 20px;
-    border-radius: 16px;
+    border-radius: 20px;
     height: auto;
-    border: 1px solid var(--rider-border);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(15, 18, 28, 0.85);
+    backdrop-filter: blur(24px) saturate(1.6);
+    -webkit-backdrop-filter: blur(24px) saturate(1.6);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 
 /* Header */
@@ -147,7 +151,7 @@
 .input-square {
     width: 8px;
     height: 8px;
-    background: var(--rider-text);
+    background: #ebb305;
 }
 
 /* Options List */
@@ -186,7 +190,7 @@
 .ride-option.selected {
     border-color: var(--rider-accent);
     box-shadow: 0 0 0 1px var(--rider-accent);
-    background: rgba(37, 99, 235, 0.1);
+    background: rgba(235, 179, 5, 0.1);
 }
 
 .option-img {
@@ -238,7 +242,7 @@
 }
 
 .option-eta.selected {
-    color: #60a5fa;
+    color: #ebb305;
 }
 
 /* Fixed Footer inside panel */
@@ -274,7 +278,7 @@
 
 .request-btn {
     background: var(--rider-accent);
-    color: white;
+    color: #121212;
     border: none;
     width: 100%;
     padding: 16px;
@@ -286,7 +290,7 @@
 }
 
 .request-btn:hover {
-    background: #1d4ed8;
+    background: #facc15;
 }
 
 .request-btn:disabled {
@@ -548,7 +552,7 @@
 
 .message-btn {
     background: var(--rider-accent);
-    color: white;
+    color: #121212;
     border: none;
     width: 100%;
     padding: 16px;
@@ -564,7 +568,7 @@
 }
 
 .message-btn:hover {
-    background: #1d4ed8;
+    background: #facc15;
 }
 
 .call-btn {

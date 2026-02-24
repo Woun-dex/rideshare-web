@@ -6,7 +6,11 @@ export interface DriverStatusUpdateDto {
 
 export const driverApi = {
     updateStatus: async (data: DriverStatusUpdateDto): Promise<{ status: string }> => {
-        const response = await apiClient.put('/api/drivers/status', data);
+        const payload = {
+            driverId: localStorage.getItem('userId'),
+            status: data.status
+        };
+        const response = await apiClient.put('/api/drivers/status', payload);
         return response.data;
     },
 };

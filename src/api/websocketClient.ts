@@ -7,6 +7,7 @@ interface WebSocketOptions {
     onDisconnect?: () => void;
     maxRetries?: number; // Default: 5
     heartbeatInterval?: number; // Default: 30000ms
+    queryParams?: Record<string, string>;
 }
 
 // In production, this would use ws:// or wss:// from environment variables
@@ -37,12 +38,14 @@ export class WebSocketClient {
 
         this.intentionallyClosed = false;
 
-        // Example of attaching token via query param
-        const token = localStorage.getItem('token');
         const url = new URL(this.options.path, WS_BASE_URL);
 
-        if (token) {
-            url.searchParams.append('token', token);
+        if (this.options.queryParams) {
+            Object.entries(this.options.queryParams).forEach(([key, value]) => {
+                if (value) {
+                    url.searchParams.append(key, value);
+                }
+            });
         }
 
         this.ws = new WebSocket(url.toString());
@@ -104,7 +107,16 @@ export class WebSocketClient {
     private startHeartbeat() {
         this.pingIntervalId = window.setInterval(() => {
             if (this.ws?.readyState === WebSocket.OPEN) {
-                this.ws.send(JSON.stringify({ type: 'PING' }));
+                // Backend requires identifying info in payload to prevent NPE during GpsMessageHandlers
+                const userId = this.options.queryParams?.userId || this.options.queryParams?.driverId || this.options.queryParams?.riderId;
+
+                this.ws.send(JSON.stringify({
+                    type: 'PING',
+                    payload: {
+                        riderId: userId,
+                        driverId: userId
+                    }
+                }));
             }
         }, this.options.heartbeatInterval || 30000);
     }

@@ -2,7 +2,7 @@
     position: relative;
     width: 100vw;
     height: 100vh;
-    background: #0f172a;
+    background: #121212;
     /* Dark bg */
     color: white;
     font-family: 'Inter', system-ui, sans-serif;
@@ -24,7 +24,7 @@
     left: 0;
     right: 0;
     height: 72px;
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0) 100%);
+    background: linear-gradient(180deg, rgba(18, 18, 18, 0.9) 0%, rgba(18, 18, 18, 0) 100%);
     z-index: 20;
     display: flex;
     justify-content: space-between;
@@ -42,7 +42,7 @@
 }
 
 .car-icon-box {
-    background: #2563eb;
+    background: #ebb305;
     border-radius: 8px;
     padding: 6px;
     display: flex;
@@ -52,7 +52,7 @@
 
 .status-toggle-container {
     display: flex;
-    background: rgba(30, 41, 59, 0.8);
+    background: rgba(30, 30, 30, 0.8);
     backdrop-filter: blur(8px);
     border-radius: 24px;
     padding: 4px;
@@ -72,9 +72,9 @@
 }
 
 .status-btn.active.online {
-    background: #3b82f6;
-    color: white;
-    box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+    background: #ebb305;
+    color: #121212;
+    box-shadow: 0 0 10px rgba(235, 179, 5, 0.4);
 }
 
 .status-btn.active.offline {
@@ -119,13 +119,13 @@
     top: 96px;
     right: 24px;
     width: 360px;
-    background: rgba(15, 23, 42, 0.95);
+    background: rgba(30, 30, 30, 0.95);
     backdrop-filter: blur(12px);
-    border: 1px solid #3b82f6;
+    border: 1px solid #ebb305;
     border-radius: 16px;
     padding: 24px;
     z-index: 20;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(235, 179, 5, 0.2);
     animation: slideInRight 0.3s ease-out;
 }
 
@@ -146,7 +146,7 @@
     justify-content: space-between;
     align-items: center;
     font-size: 0.75rem;
-    color: #60a5fa;
+    color: #ebb305;
     font-weight: 700;
     letter-spacing: 0.05em;
     margin-bottom: 20px;
@@ -242,13 +242,13 @@
 }
 
 .loc-dot.pickup {
-    background: #3b82f6;
-    box-shadow: 0 0 8px #3b82f6;
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981;
 }
 
 .loc-dot.dropoff {
-    background: #ef4444;
-    box-shadow: 0 0 8px #ef4444;
+    background: #ebb305;
+    box-shadow: 0 0 8px #ebb305;
 }
 
 .loc-line {
@@ -296,20 +296,20 @@
 
 .btn-accept {
     flex: 1;
-    background: #3b82f6;
+    background: #ebb305;
     border: none;
-    color: white;
+    color: #121212;
     padding: 14px 0;
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 4px 14px rgba(235, 179, 5, 0.4);
     transition: transform 0.2s;
 }
 
 .btn-accept:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+    box-shadow: 0 6px 20px rgba(235, 179, 5, 0.6);
 }
 
 /* Bottom elements */
@@ -327,7 +327,7 @@
     width: 40px;
     height: 40px;
     border-radius: 8px;
-    background: rgba(30, 41, 59, 0.9);
+    background: rgba(30, 30, 30, 0.9);
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: white;
     display: flex;
@@ -341,7 +341,7 @@
     bottom: 24px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(15, 23, 42, 0.8);
+    background: rgba(30, 30, 30, 0.8);
     backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     padding: 12px 24px;
@@ -366,6 +366,6 @@
 }
 
 .surge-multiplier {
-    color: #3b82f6;
+    color: #ebb305;
     font-weight: 700;
 }
