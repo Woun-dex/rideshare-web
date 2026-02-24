@@ -113,7 +113,7 @@ export default function TripMap({
 
         map.current = new mapboxgl.Map({
             container: mapContainer.current,
-            style: 'mapbox://styles/mapbox/satellite-streets-v12',
+            style: 'mapbox://styles/mapbox/standard', // Utilizing Mapbox Standard style
             center: [initLng, initLat],
             zoom: 14,
             pitch: 60,
@@ -187,50 +187,12 @@ export default function TripMap({
             });
             mapInstance.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
 
-            // Cinematic Atmospheric Fog & Starfield
-            mapInstance.setFog({
-                'range': [-1, 2],
-                'horizon-blend': 0.3,
-                'color': '#242B4B',        // Lower atmosphere 
-                'high-color': '#161B36',   
-                'space-color': '#0B1026',  
-                'star-intensity': 0.8      
-            });
+            // Note: Mapbox Standard style natively handles 3D buildings, landmarks, 
+            // sky, and fog with dynamic lighting.
 
-            // Sky Layer for realistic horizon
-            mapInstance.addLayer({
-                'id': 'sky',
-                'type': 'sky',
-                'paint': {
-                    'sky-type': 'atmosphere',
-                    'sky-atmosphere-sun': [0.0, 90.0],
-                    'sky-atmosphere-sun-intensity': 15
-                }
-            });
-
-            // 3D Building Extrusions
-            const layers = mapInstance.getStyle().layers;
-            const labelLayerId = layers?.find(
-                (layer: any) => layer.type === 'symbol' && layer.layout?.['text-field']
-            )?.id;
-
-            mapInstance.addLayer(
-                {
-                    id: '3d-buildings',
-                    source: 'composite',
-                    'source-layer': 'building',
-                    filter: ['==', 'extrude', 'true'],
-                    type: 'fill-extrusion',
-                    minzoom: 12,
-                    paint: {
-                        'fill-extrusion-color': '#f2f2f2', // Light color to reflect sunlight
-                        'fill-extrusion-height': ['get', 'height'],
-                        'fill-extrusion-base': ['get', 'min_height'],
-                        'fill-extrusion-opacity': 0.6 // Semi-transparent to let satellite show through
-                    }
-                },
-                labelLayerId
-            );
+            // Mapbox Standard Configuration
+            // You can change 'lightPreset' to: 'dawn', 'day', 'dusk', or 'night'
+            mapInstance.setConfigProperty('basemap', 'lightPreset', 'dusk');
         });
 
         return () => {
