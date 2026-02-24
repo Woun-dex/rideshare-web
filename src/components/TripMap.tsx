@@ -113,7 +113,7 @@ export default function TripMap({
 
         map.current = new mapboxgl.Map({
             container: mapContainer.current,
-            style: 'mapbox://styles/mapbox/dark-v11',
+            style: 'mapbox://styles/mapbox/satellite-streets-v12',
             center: [initLng, initLat],
             zoom: 14,
             pitch: 60,
@@ -178,6 +178,36 @@ export default function TripMap({
                 document.head.appendChild(style);
             }
 
+            // 3D Terrain (Digital Elevation Model)
+            mapInstance.addSource('mapbox-dem', {
+                'type': 'raster-dem',
+                'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+                'tileSize': 512,
+                'maxzoom': 14
+            });
+            mapInstance.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
+
+            // Cinematic Atmospheric Fog & Starfield
+            mapInstance.setFog({
+                'range': [-1, 2],
+                'horizon-blend': 0.3,
+                'color': '#242B4B',        // Lower atmosphere 
+                'high-color': '#161B36',   
+                'space-color': '#0B1026',  
+                'star-intensity': 0.8      
+            });
+
+            // Sky Layer for realistic horizon
+            mapInstance.addLayer({
+                'id': 'sky',
+                'type': 'sky',
+                'paint': {
+                    'sky-type': 'atmosphere',
+                    'sky-atmosphere-sun': [0.0, 90.0],
+                    'sky-atmosphere-sun-intensity': 15
+                }
+            });
+
             // 3D Building Extrusions
             const layers = mapInstance.getStyle().layers;
             const labelLayerId = layers?.find(
@@ -193,15 +223,10 @@ export default function TripMap({
                     type: 'fill-extrusion',
                     minzoom: 12,
                     paint: {
-                        'fill-extrusion-color': [
-                            'interpolate', ['linear'], ['get', 'height'],
-                            0, '#18181b', // Zinc 900
-                            50, '#27272a', // Zinc 800
-                            200, '#3f3f46' // Zinc 700
-                        ],
+                        'fill-extrusion-color': '#f2f2f2', // Light color to reflect sunlight
                         'fill-extrusion-height': ['get', 'height'],
                         'fill-extrusion-base': ['get', 'min_height'],
-                        'fill-extrusion-opacity': 0.7
+                        'fill-extrusion-opacity': 0.6 // Semi-transparent to let satellite show through
                     }
                 },
                 labelLayerId
@@ -250,9 +275,9 @@ export default function TripMap({
                             'line-cap': 'round'
                         },
                         paint: {
-                            'line-color': '#ebb305',
+                            'line-color': '#ef4444', // Red-500
                             'line-width': 12,
-                            'line-opacity': 0.15,
+                            'line-opacity': 0.25,
                             'line-blur': 8
                         }
                     });
@@ -267,7 +292,7 @@ export default function TripMap({
                             'line-cap': 'round'
                         },
                         paint: {
-                            'line-color': '#facc15',
+                            'line-color': '#dc2626', // Red-600
                             'line-width': 4,
                             'line-opacity': 0.9
                         }
